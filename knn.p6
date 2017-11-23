@@ -2,12 +2,12 @@ use v6;
 use lib '.';
 use CSV;
 
-sub euclidian_distance(@p1, @p2) {
+sub euclidian-distance(@p1, @p2) {
     (@p1 Z- @p2).map(* **2).sum.sqrt;
 }
 
 sub infix:<|\<---\>|>(@p1, @p2) {
-    euclidian_distance(@p1, @p2);
+    euclidian-distance(@p1, @p2);
 }
 
 sub MAIN(Str $dataset-file = 'dataset1.csv') {
