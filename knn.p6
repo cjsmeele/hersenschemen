@@ -23,6 +23,10 @@ sub 死ね(*@a) {
     die q「お前はもう死んでいる: 」 ~ join(' ', @a);
 }
 
+sub 何(*@a) {
+    @a.say;@a
+}
+
 sub MAIN(Str :$known-file   = 'dataset1.csv',
          Str :$unknown-file = 'days.csv',
          Int :$k = 5) {
@@ -35,9 +39,13 @@ sub MAIN(Str :$known-file   = 'dataset1.csv',
     my $cdr = *[1..*];
 
     my @unknown = eager CSV::parse($unknown-file.IO.lines);
+    
+    #dieboeg:
+    .say for map($cdr, eager @known);
+    
     my @unknown-seasons =
          ($cdr(@unknown)
-          .map(-> $x { ★★★★★ (((map(* |<--->| $x, map($cdr, @known)) Z @known-seasons)
+          .map(-> $x { ★★★★★ 何(((map(* |<--->| $x, map($cdr, @known)) Z @known-seasons)
                                .sort(*[0] <=> *[0]))[0..^$k]
                               .map(*[1])) }));
 
