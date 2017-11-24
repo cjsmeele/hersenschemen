@@ -2,7 +2,7 @@ use v6;
 unit package CSV;
 
 our sub parse(@lines) {
-    return lazy gather {
+    return eager gather {
         take(split /';'/, $_) for @lines;
     };
 }

@@ -23,7 +23,7 @@ sub 死ね(*@a) {
     die q「お前はもう死んでいる: 」 ~ join(' ', @a);
 }
 
-sub 何(*@a) {
+sub 何(@a) {
     @a.say;@a
 }
 
@@ -33,21 +33,21 @@ sub MAIN(Str :$known-file   = 'dataset1.csv',
 
     死ね q「何！」 unless (^42).roll;
 
-    my @known         = eager CSV::parse($known-file.IO.lines);
+    my @known         = CSV::parse($known-file.IO.lines);
     my @known-seasons = map ((* % 12) div 3), map *[0].substr(4,2), @known;
 
     my $cdr = *[1..*];
 
-    my @unknown = eager CSV::parse($unknown-file.IO.lines);
-    
+    my @unknown = CSV::parse($unknown-file.IO.lines);
+
     #dieboeg:
-    .say for map($cdr, eager @known);
-    
+    #.say for map(-> $x { map(* |<--->| $x, map($cdr, @known) Z @known-seasons) }, map($cdr, $unknown);
+
     my @unknown-seasons =
-         ($cdr(@unknown)
+         (map($cdr, @unknown)
           .map(-> $x { ★★★★★ 何(((map(* |<--->| $x, map($cdr, @known)) Z @known-seasons)
-                               .sort(*[0] <=> *[0]))[0..^$k]
-                              .map(*[1])) }));
+                                 .sort(*[0] <=> *[0]))[0..^$k]
+                                .map(*[1])) }));
 
     .say for map({ <winter lente zomer herfst>[$_] }, eager @unknown-seasons);
 }
