@@ -19,9 +19,15 @@ sub prefix:<★★★★★>(@p1) {
         !! ★★★★★ @p1[0..^(@p1.elems-1)];
 }
 
+sub 死ね(*@a) {
+    die q「お前はもう死んでいる: 」 ~ join(' ', @a);
+}
+
 sub MAIN(Str :$known-file   = 'dataset1.csv',
          Str :$unknown-file = 'days.csv',
          Int :$k = 5) {
+
+    死ね q「何！」 unless (^42).roll;
 
     my @known         = eager CSV::parse($known-file.IO.lines);
     my @known-seasons = map ((* % 12) div 3), map *[0].substr(4,2), @known;
