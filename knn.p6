@@ -6,7 +6,7 @@ sub euclidian-distance(@p1, @p2) {
     (@p1 Z- @p2).map(* **2).sum.sqrt;
 }
 
-sub infix:<|\<---\>|>(@p1, @p2) {
+sub infix:«|<--->|»(@p1, @p2) {
     euclidian-distance(@p1, @p2);
 }
 
