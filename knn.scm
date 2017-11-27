@@ -90,11 +90,15 @@
                                           (parse-csv-file base-csv)
                                           (parse-csv-file validation-csv))))))
 
+;; For 1..max-k, determine for each K the correctness value returned by verify.
+;; => ((K correctness)...)
 (define (grade-k-it max-k base-data validation-data)
   (map (lambda (n)
          (list n (verify-it n base-data validation-data)))
        (iota (apply min (list max-k (length base-data))) 1)))
 
+;; Run grade-k-it with K values 1..100 and print a list of tab-separated
+;; k / correctness values.
 (define (grade-k base-csv validation-csv)
   (for-each
    (lambda (kg)
