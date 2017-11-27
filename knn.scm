@@ -112,7 +112,7 @@
 
 (define (usage program-name)
   (format (current-error-port)
-          "usage: ~a <classify k | verify k | grade-k> base-csv <input-csv | validation-csv>\n"
+          "usage: ~a <classify K | verify K | grade-k> BASE-CSV <INPUT-CSV | VALIDATION-CSV>\n"
           program-name)
   (exit 2))
 
