@@ -79,9 +79,10 @@
 ;; Run classify with validation data as the input, of which the dates are known.
 ;; Return a correctness ratio.
 (define (verify-it k base-data validation-data)
-  ;; TODO.
-  (display "UNIMPLEMENTED\n")
-  0.0)
+  (/ (count equal?
+            (classify-it k base-data validation-data)
+            (map date-to-season (map car validation-data)))
+     (length validation-data)))
 
 (define (verify k base-csv validation-csv)
   (format #t "~a%~%" (floor (* 100
@@ -89,9 +90,25 @@
                                           (parse-csv-file base-csv)
                                           (parse-csv-file validation-csv))))))
 
+(define (grade-k-it max-k base-data validation-data)
+  (map (lambda (n)
+         (list n (verify-it n base-data validation-data)))
+       (iota (apply min (list max-k (length base-data))) 1)))
+
+(define (grade-k base-csv validation-csv)
+  (for-each
+   (lambda (kg)
+     (format #t "~a\t~a~%"
+             (car kg)
+             (inexact (cadr kg))))
+   (grade-k-it
+    100
+    (parse-csv-file base-csv)
+    (parse-csv-file validation-csv))))
+
 (define (usage program-name)
   (format (current-error-port)
-          "usage: ~a <classify | verify> k base-csv <input-csv | validation-csv>\n"
+          "usage: ~a <classify k | verify k | grade-k> base-csv <input-csv | validation-csv>\n"
           program-name)
   (exit 2))
 
@@ -106,4 +123,7 @@
               (= 5 (length args)))
          (apply verify (cons (string->number (caddr args))
                              (cdddr args))))
+        ((and (string=? "grade-k" (cadr args))
+              (= 4 (length args)))
+         (apply grade-k (cddr args)))
         (else (usage (car args)))))
