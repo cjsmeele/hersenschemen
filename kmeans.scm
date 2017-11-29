@@ -60,13 +60,71 @@
             (random-integer (+ 1 (- (cadr b) (car b))))))
        bounds))
 
-(define (kmeans k dataset)
-  (let ((cardinality (length (car dataset)))
-        (bounds (nbounds dataset)))
-    (if k
-        (display "UNIMPLEMENTED\n")
-        ;; TODO.
-        #t)))
+(define (nmeans points)
+  (map (lambda (x) (/ x (length points)))
+       (reduce (lambda (p1 p2)
+                 (map + p1 p2))
+               (make-list (length (list-ref points 0)) 0)
+               points)))
+
+(define (cluster-it centroids points)
+  (let ((clusters (make-list (length centroids) '())))
+    ;;(display centroids)
+    (for-each
+     (lambda (p)
+       ;; (display "p")
+       (let ((ci (caar (sort (map (lambda (i cp)
+                               ;; (format #t "~a ~a ~a~%" i cp (euclidean-distance cp p))
+                                    (list i (euclidean-distance cp p)))
+                                  (iota (length centroids))
+                                  centroids)
+                             (lambda (a b)
+                               (<= (cadr a) (cadr b)))))))
+         ;; (display ci)
+         (list-set! clusters ci
+                    (cons p (list-ref clusters ci)))))
+     points)
+    (if (= 0 (count (lambda (c) (= 0 (length c))) clusters))
+        clusters
+        #f)))
+
+(define kmeans-attempts-per-k 1)
+
+(define (kmeans k points)
+  (let ((cardinality (length (car points)))
+        (bounds (nbounds points)))
+    (let ((kmeans-with-k
+           (lambda (k)
+             (let ((clusters
+                    (map
+                     (lambda (attempt-i)
+                       (let ((reroll (let/cc cc cc))
+                             (centroids
+                              (map (lambda (centroid-i)
+                                     (nrand bounds))
+                                   (iota k))))
+                         (let ((clusters (or (cluster-it centroids points)
+                                             (reroll reroll))))
+                           (for-each
+                            (lambda (c)
+                              (for-each
+                               (lambda (cp)
+                                 (display cp)
+                                 (newline))
+                               c)
+                              (newline))
+                            clusters))))
+                     (iota kmeans-attempts-per-k))))
+               (let loop ((last-centroids centroids))
+                 ;; TODO
+                 ;; now recenter loop
+
+                )))))
+      (if k
+          (kmeans-with-k k)
+          ;; else find optimal K
+          ))))
+
 
 (define (usage program-name)
   (format (current-error-port)
@@ -75,9 +133,10 @@
   (exit 2))
 
 (define (main args)
+  (random-source-randomize! default-random-source)
   (when (not (= (length args) 3))
     (usage (car args)))
   (kmeans (if (string=? "auto" (cadr args))
               #f
               (string->number (cadr args)))
-          (parse-csv-file (caddr args))))
+          (map cdr (parse-csv-file (caddr args)))))
