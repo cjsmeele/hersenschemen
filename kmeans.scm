@@ -2,6 +2,9 @@
 
 (use srfi-27) ;; For random numbers.
 
+(define (...)
+  (error "Het staat op Canvas, zoek het uit.\n"))
+
 ;; CSV filename => ((cell...)...)
 ;; Cells are converted to numbers.
 (define (parse-csv-file filename)
@@ -61,7 +64,7 @@
        bounds))
 
 (define (nmeans points)
-  (map (lambda (x) (/ x (length points)))
+ (map (lambda (x) (/ x (length points)))
        (reduce (lambda (p1 p2)
                  (map + p1 p2))
                (make-list (length (list-ref points 0)) 0)
@@ -98,31 +101,39 @@
              (let ((clusters
                     (map
                      (lambda (attempt-i)
-                       (let ((reroll (let/cc cc cc))
-                             (centroids
-                              (map (lambda (centroid-i)
-                                     (nrand bounds))
-                                   (iota k))))
-                         (let ((clusters (or (cluster-it centroids points)
-                                             (reroll reroll))))
-                           (for-each
-                            (lambda (c)
-                              (for-each
-                               (lambda (cp)
-                                 (display cp)
-                                 (newline))
-                               c)
-                              (newline))
-                            clusters))))
-                     (iota kmeans-attempts-per-k))))
-               (let loop ((last-centroids centroids))
-                 ;; TODO
-                 ;; now recenter loop
-
-                )))))
+                       (letrec* ((reroll (let/cc cc cc))
+                                 (centroids
+                                  (map (lambda (centroid-i)
+                                         (nrand bounds))
+                                       (iota k))))
+                         (display "Initially (re)rolled centroids:\n")
+                         (for-each
+                          (lambda (c)
+                            (display c)
+                            (newline))
+                          centroids)
+                         (let loop ((last-centroids centroids))
+                           (display "Reclustering / Recentering\n")
+                           (let ((new-centroids
+                                  (map nmeans
+                                       (or (cluster-it last-centroids points)
+                                           (reroll reroll)))))
+                             (for-each
+                              (lambda (c)
+                                (display (map inexact c))
+                                (newline))
+                              new-centroids)
+                             (newline)
+                             (if (equal? new-centroids last-centroids)
+                                 ;; (list centroids clusters)
+                                 (begin (display "STABLE! :D\n\n") centroids)
+                                 (loop new-centroids))))))
+                     (iota kmeans-attempts-per-k))))))))
       (if k
           (kmeans-with-k k)
           ;; else find optimal K
+          ;; TODOOOO
+          (...)
           ))))
 
 
