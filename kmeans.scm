@@ -46,7 +46,7 @@
 ;; Determine the bounds for each dimension in dataset.
 ;; ((x...)...) => ((min max)...)
 (define (nbounds dataset)
-  (let ((cardinality (length (car dataset))))
+  (let ((cardinality (length (cdar dataset))))
     (map (lambda (i)
            (let ((values (map (lambda (row) (list-ref row i))
                               dataset)))
@@ -77,7 +77,7 @@
        ;; (display "p")
        (let ((ci (caar (sort (map (lambda (i cp)
                                ;; (format #t "~a ~a ~a~%" i cp (euclidean-distance cp p))
-                                    (list i (euclidean-distance cp p)))
+                                    (list i (euclidean-distance cp (cdr p))))
                                   (iota (length centroids))
                                   centroids)
                              (lambda (a b)
@@ -129,8 +129,8 @@
                               new-centroids)
                              (newline)
                              (if (equal? new-centroids last-centroids)
-                                 ;; (list centroids clusters)
-                                 (begin (display "STABLE! :D\n\n") (list new-centroids clusters))
+                                 (begin (display "STABLE! :D\n\n")
+                                        (list new-centroids clusters))
                                  (loop new-centroids))))))
                      (iota kmeans-attempts-per-k))))))))
       (if k
@@ -154,4 +154,8 @@
   (kmeans (if (string=? "auto" (cadr args))
               #f
               (string->number (cadr args)))
-          (map cdr (parse-csv-file (caddr args)))))
+          ;; (map cdr (parse-csv-file (caddr args)))))
+          (map (lambda (p)
+                 (cons (date-to-season (car p))
+                       (cdr p)))
+               (parse-csv-file (caddr args)))))
