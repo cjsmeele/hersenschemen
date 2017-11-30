@@ -19,7 +19,7 @@
 ;; Calculate the distance between two points in n-dimensional space.
 (define (euclidean-distance p1 p2)
   (sqrt (reduce + 0 (map (lambda (x) (expt x 2))
-                         (map - p1 p2)))))
+                         (map - (cdr p1) (cdr p2))))))
 
 ;; Map a YYYYMMDD date number (e.g. 20170131) to a season symbol.
 (define (date-to-season date-nr)
@@ -46,9 +46,13 @@
 ;; Determine the bounds for each dimension in dataset.
 ;; ((x...)...) => ((min max)...)
 (define (nbounds dataset)
+  ;(display (car dataset))
+  ;(newline)
+  ;(display (cdar dataset))
+  ;(newline)
   (let ((cardinality (length (cdar dataset))))
     (map (lambda (i)
-           (let ((values (map (lambda (row) (list-ref row i))
+           (let ((values (map (lambda (row) (list-ref row (+ 1 i)))
                               dataset)))
              (list (apply min values)
                    (apply max values))))
@@ -62,12 +66,28 @@
             (random-integer (+ 1 (- (cadr b) (car b))))))
        bounds))
 
+;; From a list, return the value that occurs the most often.
+;; Keep popping the list until exactly one value has the most occurrences.
+(define (pick-favorite ordered-values)
+  (letrec* ((uniques (delete-duplicates ordered-values))
+            (uniques-counts
+             (map (lambda (uv) (count (lambda (ov) (equal? ov uv)) ordered-values))
+                  uniques))
+            (count-max (apply max uniques-counts)))
+    (if (= 1 (count (lambda (c) (= c count-max)) uniques-counts))
+        (any (lambda (v c) (and (= count-max c) v))
+             uniques
+             uniques-counts)
+        (pick-favorite (take ordered-values
+                             (- (length ordered-values) 1))))))
+
 (define (nmeans points)
- (map (lambda (x) (/ x (length points)))
-       (reduce (lambda (p1 p2)
-                 (map + p1 p2))
-               (make-list (length (list-ref points 0)) 0)
-               points)))
+  (cons (pick-favorite (map car points))
+        (map (lambda (x) (/ x (length points)))
+             (reduce (lambda (p1 p2)
+                       (map + p1 p2))
+                     (make-list (length (list-ref points 0)) 0)
+                     (map cdr points)))))
 
 (define (cluster-it centroids points)
   (let ((clusters (make-list (length centroids) '())))
@@ -77,7 +97,7 @@
        ;; (display "p")
        (let ((ci (caar (sort (map (lambda (i cp)
                                ;; (format #t "~a ~a ~a~%" i cp (euclidean-distance cp p))
-                                    (list i (euclidean-distance cp (cdr p))))
+                                    (list i (euclidean-distance (cdr cp) (cdr p))))
                                   (iota (length centroids))
                                   centroids)
                              (lambda (a b)
@@ -103,33 +123,18 @@
                        (letrec* ((reroll (let/cc cc cc))
                                  (centroids
                                   (map (lambda (centroid-i)
-                                         (nrand bounds))
+                                         (cons 'IF-YOU-ARE-READING-THIS-YOU-DONT-HAVE-A-VALID-SEASON (nrand bounds)))
                                        (iota k))))
-                         (display "Initially (re)rolled centroids:\n")
-                         (for-each
-                          (lambda (c)
-                            (display c)
-                            (newline))
-                          centroids)
                          (let loop ((last-centroids centroids))
-                           (display "Reclustering / Recentering\n")
                            (letrec* ((new-centroids-and-clusters
-                                      (map (lambda (c)
-                                             (list (nmeans c) c))
-                                           (map (lambda (clus) (display (length clus)) (newline) clus)
-                                           ;; (map (lambda (clus) clus)
-                                                (or (cluster-it last-centroids points)
-                                                    (reroll reroll)))))
+                                       (map (lambda (c)
+                                              (list (nmeans c) c))
+                                            (or (cluster-it last-centroids points)
+                                                (reroll reroll))))
                                      (new-centroids (map car new-centroids-and-clusters))
                                      (clusters (map cadr new-centroids-and-clusters)))
-                             (for-each
-                              (lambda (c)
-                                (display (map inexact c))
-                                (newline))
-                              new-centroids)
-                             (newline)
                              (if (equal? new-centroids last-centroids)
-                                 (begin (display "STABLE! :D\n\n")
+                                 (begin (display "\n\n\n\n\n\nSTABLE! :D\n\n")
                                         (list new-centroids clusters))
                                  (loop new-centroids))))))
                      (iota kmeans-attempts-per-k))))))))
