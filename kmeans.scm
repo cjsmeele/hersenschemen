@@ -110,40 +110,68 @@
         clusters
         #f)))
 
-(define kmeans-attempts-per-k 1)
+(define (get-intra-cluster-distance centroid cluster)
+  (reduce + 0 (map (lambda (p)
+                     (euclidean-distance p centroid))
+                   cluster)))
+
+(define kmeans-attempts-per-k 100)
+
+;; => (centroid-list )
+;; centroid-list: (label total-inner-distance coordinate)
+(define (kmeans-with-k k points bounds)
+  (map
+   (lambda (attempt-i)
+     (letrec* ((reroll (let/cc cc cc))
+               (centroids
+                (map (lambda (centroid-i)
+                       (cons 'IF-YOU-ARE-READING-THIS-YOU-DONT-HAVE-A-VALID-SEASON (nrand bounds)))
+                     (iota k))))
+       (let loop ((last-centroids centroids))
+         (letrec* ((new-centroids-and-clusters
+                     (map (lambda (c)
+                            (list (nmeans c) c))
+                          (or (cluster-it last-centroids points)
+                              (reroll reroll))))
+                   (new-centroids (map car new-centroids-and-clusters))
+                   (clusters (map cadr new-centroids-and-clusters)))
+           (if (equal? new-centroids last-centroids)
+               (begin (format #t "Calculated ~a / ~a.~%" (+ 1 attempt-i) kmeans-attempts-per-k)
+                      ; '((key val) (key val))
+                      `((centroids ,(map (lambda (ct cl)
+                                           `((location ,(cdr ct))
+                                             (label    ,(car ct))
+                                             (size     ,(length cl))))
+                                         new-centroids
+                                         clusters))
+                        (distance  ,(reduce + 0 (map get-intra-cluster-distance
+                                                     new-centroids
+                                                     clusters)))))
+                      ;;(list new-centroids
+                      ;;      (reduce + 0 (map get-intra-cluster-distance
+                      ;;                       new-centroids
+                      ;;                       clusters))
+                      ;;      (map length clusters)))
+               (loop new-centroids))))))
+   (iota kmeans-attempts-per-k)))
 
 (define (kmeans k points)
-  (let ((cardinality (length (car points)))
-        (bounds (nbounds points)))
-    (let ((kmeans-with-k
-           (lambda (k)
-             (let ((clusters
-                    (map
-                     (lambda (attempt-i)
-                       (letrec* ((reroll (let/cc cc cc))
-                                 (centroids
-                                  (map (lambda (centroid-i)
-                                         (cons 'IF-YOU-ARE-READING-THIS-YOU-DONT-HAVE-A-VALID-SEASON (nrand bounds)))
-                                       (iota k))))
-                         (let loop ((last-centroids centroids))
-                           (letrec* ((new-centroids-and-clusters
-                                       (map (lambda (c)
-                                              (list (nmeans c) c))
-                                            (or (cluster-it last-centroids points)
-                                                (reroll reroll))))
-                                     (new-centroids (map car new-centroids-and-clusters))
-                                     (clusters (map cadr new-centroids-and-clusters)))
-                             (if (equal? new-centroids last-centroids)
-                                 (begin (display "\n\n\n\n\n\nSTABLE! :D\n\n")
-                                        (list new-centroids clusters))
-                                 (loop new-centroids))))))
-                     (iota kmeans-attempts-per-k))))))))
-      (if k
-          (kmeans-with-k k)
-          ;; else find optimal K
-          ;; TODOOOO
-          (...)
-          ))))
+  (let ((bounds (nbounds points)))
+    (if k
+      (let ((results (kmeans-with-k k points bounds)))
+        (for-each
+          (lambda (r)
+            (let ((ct (cadr (assoc 'centroids r))))
+              (format #t "~a ~a~%"
+                      (map cdr ct)
+                      (inexact (cadr (assoc 'distance r))))))
+          (sort results
+                (lambda (a b)
+                  (<= (cadr (assoc 'distance a))
+                      (cadr (assoc 'distance b)))))))
+      ;; else find optimal K
+      ;; TODOOOO
+      (...))))
 
 
 (define (usage program-name)
