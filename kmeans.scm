@@ -33,7 +33,6 @@
 
 ;; Map dataset points to nearest clusters.
 ;; ((('label (x...))...) ((x...)...)) => (('label distance)...)
-;; XXX: UNTESTED
 (define (segment clusters dataset)
   (map (lambda (point)
          (car (sort (map (lambda (c)
@@ -114,10 +113,15 @@
                           centroids)
                          (let loop ((last-centroids centroids))
                            (display "Reclustering / Recentering\n")
-                           (let ((new-centroids
-                                  (map nmeans
-                                       (or (cluster-it last-centroids points)
-                                           (reroll reroll)))))
+                           (letrec* ((new-centroids-and-clusters
+                                      (map (lambda (c)
+                                             (list (nmeans c) c))
+                                           (map (lambda (clus) (display (length clus)) (newline) clus)
+                                           ;; (map (lambda (clus) clus)
+                                                (or (cluster-it last-centroids points)
+                                                    (reroll reroll)))))
+                                     (new-centroids (map car new-centroids-and-clusters))
+                                     (clusters (map cadr new-centroids-and-clusters)))
                              (for-each
                               (lambda (c)
                                 (display (map inexact c))
@@ -126,7 +130,7 @@
                              (newline)
                              (if (equal? new-centroids last-centroids)
                                  ;; (list centroids clusters)
-                                 (begin (display "STABLE! :D\n\n") centroids)
+                                 (begin (display "STABLE! :D\n\n") (list new-centroids clusters))
                                  (loop new-centroids))))))
                      (iota kmeans-attempts-per-k))))))))
       (if k
