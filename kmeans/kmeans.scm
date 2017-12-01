@@ -40,18 +40,6 @@
     (( 6  7  8) 'summer)
     (( 9 10 11) 'autumn)))
 
-;; Map dataset points to nearest clusters.
-;; ((('label (x...))...) ((x...)...)) => (('label distance)...)
-(define (segment clusters dataset)
-  (map (lambda (point)
-         (car (sort (map (lambda (c)
-                           (list (car c)
-                                 (euclidean-distance (cadr c) point)))
-                         clusters)
-                    (lambda (a b)
-                      (<= (cadr a) (cadr b))))))
-       dataset))
-
 ;; Determine the bounds for each dimension in dataset.
 ;; ((x...)...) => ((min max)...)
 (define (nbounds dataset)
