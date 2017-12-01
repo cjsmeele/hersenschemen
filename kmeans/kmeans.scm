@@ -86,6 +86,8 @@
         (pick-favorite (take ordered-values
                              (- (length ordered-values) 1))))))
 
+;; Determine the center of a list of n-dimensional points.
+;; ((x...)...) => (center-x...)
 (define (nmeans points)
   (cons (pick-favorite (map car points))
         (map (lambda (x) (/ x (length points)))
@@ -94,6 +96,10 @@
                      (make-list (length (list-ref points 0)) 0)
                      (map cdr points)))))
 
+;; Given a list of centroids and a list of points,
+;; generate a list of points for each centroid.
+;; The order of points within each cluster list is undefined.
+;; (((ctr-x...)...) ((x...)...) => (((x...)...)...)
 (define (cluster-it centroids points)
   (let ((clusters (make-list (length centroids) '())))
     (for-each
@@ -111,25 +117,39 @@
         clusters
         #f)))
 
+;; Determine the total intra-cluster distance.
+;; ((ctr-x...) ((x...)...)) => distance
 (define (get-intra-cluster-distance centroid cluster)
   (reduce + 0 (map (lambda (p)
                      (euclidean-distance p centroid))
                    cluster)))
 
-;; => (centroid-list )
-;; centroid-list: (label total-inner-distance coordinate)
+;; Generate an unsorted list of length `kmeans-attempts-per-k',
+;; containing centroid info and a distance number for each attempt.
+;;
+;; (k ((x...)...) ((min max)...))
+;; => (('centroids (('location (x...))
+;;                  ('label season)
+;;                  ('size nr-of-points-in-cluster))
+;;     ('distance total-icd))...)
 (define (kmeans-with-k k points bounds)
-  (map
+  (map ;; Map over 1..kmeans-attempts-per-k
    (lambda (attempt-i)
      ;(format (current-error-port) "K~a ~a / ~a.~%" k (+ 1 attempt-i) kmeans-attempts-per-k)
      (flush-all-ports)
      (display #\. (current-error-port))
      (flush-all-ports)
-     (letrec* ((reroll (let/cc cc cc))
+
+     (letrec* (;; Calling (reroll reroll) within the let body jumps back to this point.
+               ;; This way we can create new initial centroids if we find an empty cluster.
+               (reroll (let/cc cc cc))
+               ;; Create initial centroids.
                (centroids
                 (map (lambda (centroid-i)
                        (cons 'IF-YOU-ARE-READING-THIS-YOU-DONT-HAVE-A-VALID-SEASON (nrand bounds)))
                      (iota k))))
+
+       ;; Keep reclustering and recentering until the centroids no longer move.
        (let loop ((last-centroids centroids))
          (letrec* ((new-centroids-and-clusters
                      (map (lambda (c)
@@ -138,7 +158,17 @@
                               (reroll reroll))))
                    (new-centroids (map car new-centroids-and-clusters))
                    (clusters (map cadr new-centroids-and-clusters)))
+
+           ;; Assert that the centroid position is stored as a list of rational numbers.
+           ;; This way we can safely compare centroid positions for equality without
+           ;; messy floating point precision issues.
+           (when (any (lambda (new old) (or (inexact? new)
+                                            (inexact? old)))
+                      new-centroids last-centroids)
+             (error "Centroid positions are not exact!"))
+
            (if (equal? new-centroids last-centroids)
+               ;; Stable! Return the centroids and the total ICD.
                `((centroids ,(map (lambda (ct cl)
                                     `((location ,(cdr ct))
                                       (label    ,(car ct))
@@ -148,42 +178,43 @@
                  (distance  ,(reduce + 0 (map get-intra-cluster-distance
                                               new-centroids
                                               clusters))))
+               ;; Try again.
                (loop new-centroids))))))
    (iota kmeans-attempts-per-k)))
 
+;; Call kmeans-with-k and return the result with the lowest ICD.
 (define (best-kmeans-for-k k points bounds)
   (car (sort (kmeans-with-k k points bounds)
              (lambda (a b)
                (<= (cadr (assoc 'distance a))
                    (cadr (assoc 'distance b)))))))
 
+;; Generate the given amount of clusters with the given points.
+;; If K is a number, generate that many clusters and print the centroids and their seasons.
+;; If K is #f, generate K clusters for K in 1..kmeans-max-auto-k and print their best ICDs.
 (define (kmeans k points)
-  (letrec ((bounds (nbounds points))
-           (format-result
-            (lambda (k r dump-centroids?)
-              (let ((ct (cadr (assoc 'centroids r))))
-                (format "~a\t~a~%~a"
-                        k
-                        (inexact (cadr (assoc 'distance r)))
-                        (if dump-centroids?
-                            (reduce string-append ""
-                                    (map (lambda (ct)
-                                           (format "~a(~a) @ ~a~%"
-                                                   (cadr (assoc 'label ct))
-                                                   (cadr (assoc 'size ct))
-                                                   (map inexact (cadr (assoc 'location ct)))))
-                                         ct))
-                            ""))))))
+  (let ((bounds (nbounds points))
+        (format-result
+         (lambda (k r dump-centroids?)
+           (let ((ct (cadr (assoc 'centroids r))))
+             (format "~a\t~a~%~a"
+                     k
+                     (inexact (cadr (assoc 'distance r)))
+                     (if dump-centroids?
+                         (reduce string-append ""
+                                 (map (lambda (ct)
+                                        (format "~a(~a) @ ~a~%"
+                                                (cadr (assoc 'label ct))
+                                                (cadr (assoc 'size ct))
+                                                (map inexact (cadr (assoc 'location ct)))))
+                                      ct))
+                         ""))))))
     (if k
         (begin
-          (format #t ;#(current-error-port)
-                  "K\tBest ICD~%")
+          (display "K\tBest ICD\n")
           (display (format-result k (best-kmeans-for-k k points bounds) #t)))
-
-        ;; else print ICD for each K
         (begin
-          (format #t ;#(current-error-port)
-                  "K\tBest ICD~%")
+          (display "K\tBest ICD\n")
           (for-each
            (lambda (k)
              (display (format-result k (best-kmeans-for-k k points bounds) #f)))
