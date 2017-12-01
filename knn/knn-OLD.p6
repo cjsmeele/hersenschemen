@@ -2,6 +2,8 @@ use v6;
 use lib '.';
 use CSV;
 
+# NB: XXX: Zie de scheme implementatie, deze perl6 versie is incompleet.
+
 sub euclidian-distance(@p1, @p2) {
     (@p1 Z- @p2).map(* **2).sum.sqrt;
 }
