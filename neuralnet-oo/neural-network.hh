@@ -26,12 +26,12 @@ public:
             outputValue(initialVal) {
     }
 
-    void addInput(layer_t& l);
-    void addInput(Neuron& n);
-    void setWeight(Neuron* np, double weight);
-    void removeInput(Neuron* np);
+    void addInput(layer_t &l);
+    void addInput(Neuron &n);
+    void setWeight(Neuron *np, double weight);
+    void removeInput(Neuron *np);
     void removeAllInputs();
-    double getOutput();
+    double getOutput() const;
     void setOutput(double i);
     void calculate();
 

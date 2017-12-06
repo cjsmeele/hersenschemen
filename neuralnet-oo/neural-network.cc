@@ -10,12 +10,12 @@ double randomWeight() {
 }
 
 void Neuron::addInput(layer_t &l) {
-    for (auto& n : l)
-        inputs.push_back(input_t(&n, randomWeight()));
+    for (auto &n : l)
+        inputs.emplace_back(&n, randomWeight());
 }
 
 void Neuron::addInput(Neuron &n) {
-    inputs.push_back(input_t(&n, randomWeight()));
+    inputs.emplace_back(&n, randomWeight());
 }
 
 void Neuron::removeInput(Neuron *np) {
@@ -23,6 +23,7 @@ void Neuron::removeInput(Neuron *np) {
         if (inputs[i].first == np) {
             std::swap(inputs[i], inputs.back());
             inputs.pop_back();
+            break;
         }
     }
 }
@@ -31,7 +32,7 @@ void Neuron::removeAllInputs() {
     inputs.clear();
 }
 
-double Neuron::getOutput() {
+double Neuron::getOutput() const {
     return outputValue;
 }
 
@@ -40,29 +41,31 @@ void Neuron::setOutput(double i) {
 }
 
 void Neuron::setWeight(Neuron *np, double weight) {
-    for (auto& n : inputs) {
+    for (auto &n : inputs) {
         if (n.first == np) {
             n.second = weight;
+            break;
         }
     }
 }
 
 void Neuron::calculate() {
     outputValue = 0;
-    for (const auto&n : inputs)
+    for (const auto &n : inputs)
         outputValue += n.first->getOutput() * n.second;
 
 }
 
-void Net::addNeuron(uint layer, Neuron n) {
-    if (the_net.size() < layer)
-        the_net.reserve(layer);
 
-    the_net[layer].push_back(std::move(n));
+void Net::addNeuron(uint layer, Neuron n) {
+    if (the_net.size() <= layer)
+        the_net.reserve(layer+1);
+
+    the_net[layer].emplace_back(std::move(n));
 }
 
 void Net::addLayer(uint size) {
-    
+
 }
 
 std::vector<double> Net::run(std::vector<double> input) {
@@ -70,13 +73,13 @@ std::vector<double> Net::run(std::vector<double> input) {
         the_net[0][i].setOutput(input[i]);
     }
     for (int i = 1; i < the_net.size(); i++) {
-        for (auto& n : the_net[i]) {
+        for (auto &n : the_net[i]) {
             n.calculate();
         }
     }
 
     std::vector<double> r;
-    for (auto& n : the_net.back()) {
+    for (auto &n : the_net.back()) {
         r.push_back(n.getOutput());
     }
     return r;
