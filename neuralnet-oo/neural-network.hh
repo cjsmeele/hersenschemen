@@ -15,15 +15,15 @@ using layer_t = std::vector<Neuron>;
 class Neuron {
 
     double outputValue;
-    double threshold;
 
     using input_t = std::pair<Neuron*, double>; //Neuron and weight
     std::vector<input_t> inputs;
 
 
 public:
-    Neuron(double initialVal) :
-            outputValue(initialVal) {
+    Neuron(double initialVal = 0)
+        : outputValue(initialVal)
+        {
     }
 
     void addInput(layer_t &l);
@@ -48,6 +48,9 @@ class Net {
 
 public:
     Net() = default;
+    Net(const std::vector<layer_t> &net)
+        : the_net(net)
+        { }
 
     void addNeuron(uint layer, Neuron n);
     void addLayer(uint size);
