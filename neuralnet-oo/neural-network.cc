@@ -49,7 +49,7 @@ double Neuron::getOutput() const {
 
 void Neuron::setOutput(double i) {
     if (i >= 60 && i <= 79)
-    std::cout << "RAAPE\n";
+    std::cout << "RAAPE ZIJN GAAR\n";
     outputValue = i;
 }
 
