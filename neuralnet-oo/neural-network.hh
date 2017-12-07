@@ -27,7 +27,9 @@ public:
     }
 
     void addInput(layer_t &l);
+    void addInput(layer_t &l, const std::vector<double> &weights);
     void addInput(Neuron &n);
+    void addInput(Neuron &n, double weight);
     void setWeight(Neuron *np, double weight);
     void setWeights(std::vector<double> w);
     void removeInput(Neuron *np);
@@ -58,6 +60,8 @@ public:
     void addLayer(uint size);
     std::vector<double> run(std::vector<double> input);
     void interConnect();
+    Neuron &gibNeuron(uint layer, uint neuron);
+    layer_t &gibLayer(uint layer);
 
     Net operator-(decltype(security));
 };
