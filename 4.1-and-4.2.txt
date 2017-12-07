@@ -1,0 +1,46 @@
+NOR-Gate with threshold:
+
+w1 = -1
+w2 = -1  t = -1
+w3 = -1
+
+Output table:
+
+input | sum | output
+------+-----+-------
+0 0 0 |   0 |      1
+0 0 1 |  -1 |      0
+0 1 0 |  -1 |      0
+0 1 1 |  -2 |      0
+1 0 0 |  -1 |      0
+1 0 1 |  -2 |      0
+1 1 0 |  -2 |      0
+1 1 1 |  -3 |      0
+
+NAND-Gate with bias:
+
+w1 = -1
+w2 = -1
+wb =  2
+
+Output table:
+
+input | sum | output
+------+-----+-------
+0 0   |   2 |      1
+0 1   |   1 |      1
+1 0   |   1 |      1
+1 1   |   0 |      0
+
+Inverter:
+
+w1 = -1
+wb =  1
+
+input | sum | output
+------+-----+-------
+0     |   1 |      1
+1     |   0 |      0
+
+
+Adder staat in de PNG;
