@@ -29,6 +29,7 @@ public:
     void addInput(layer_t &l);
     void addInput(Neuron &n);
     void setWeight(Neuron *np, double weight);
+    void setWeights(std::vector<double> w);
     void removeInput(Neuron *np);
     void removeAllInputs();
     double getOutput() const;
@@ -39,6 +40,7 @@ public:
 
 
 /* Net */
+struct {} security;
 
 class Net {
 
@@ -55,5 +57,7 @@ public:
     void addNeuron(uint layer, Neuron n);
     void addLayer(uint size);
     std::vector<double> run(std::vector<double> input);
+    void interConnect();
 
+    Net operator-(decltype(security));
 };

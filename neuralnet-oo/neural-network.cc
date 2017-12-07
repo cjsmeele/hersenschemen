@@ -2,6 +2,7 @@
 
 #include <utility>
 #include <cstdlib>
+#include <cmath>
 
 double randomWeight() {
     double random = (double) rand() / (double) RAND_MAX;
@@ -51,25 +52,38 @@ void Neuron::setWeight(Neuron *np, double weight) {
 
 void Neuron::calculate() {
     outputValue = 0;
-    for (const auto &n : inputs)
+    for (const auto &n : inputs) {
         outputValue += n.first->getOutput() * n.second;
+        //std::cout << "I GOT DIS: " << n.first->getOutput() << " TIMES DIS: " << n.second << '\n';
+    }
+    //std::cout << "HERRO I EM KEKULATING " << outputValue << "\n";
+    outputValue = 1 / (1 + exp(-outputValue)); // sigmoid away
+}
 
+void Neuron::setWeights(std::vector<double> w) {
+    for (int i = 0; i < w.size(); i++) {
+        inputs[i].second = w[i];
+    }
 }
 
 
 void Net::addNeuron(uint layer, Neuron n) {
-    if (the_net.size() <= layer)
-        the_net.reserve(layer+1);
-
+    if (the_net.size() <  layer - 1)
+        return;
+    if (the_net.size() == layer - 1)
+        the_net.emplace_back(layer_t{ Neuron{1} }); // if the layer does not exist, make one and add a bias
     the_net[layer].emplace_back(std::move(n));
 }
 
 void Net::addLayer(uint size) {
-
+    auto layer = the_net.size() + 1;
+    for (int i = 0; i < size; i++) {
+        addNeuron(layer, Neuron{});
+    }
 }
 
 std::vector<double> Net::run(std::vector<double> input) {
-    for (int i = 0; i < the_net[0].size(); i++) {
+    for (int i = 1; i < the_net[0].size(); i++) {
         the_net[0][i].setOutput(input[i]);
     }
     for (int i = 1; i < the_net.size(); i++) {
@@ -83,4 +97,16 @@ std::vector<double> Net::run(std::vector<double> input) {
         r.push_back(n.getOutput());
     }
     return r;
+}
+
+void Net::interConnect() {
+    for (int i = 1; i < the_net.size(); i++) {
+        for (auto& n: the_net[i]) {
+            n.addInput(the_net[i - 1]);
+        }
+    }
+}
+
+Net Net::operator-(decltype(security)) {
+    return Net();
 }
