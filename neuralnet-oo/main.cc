@@ -49,7 +49,7 @@ void inverter() {
     std::cout << "[ 1 ] => " << net.run({ 1 }) << "\n";
 }
 
-void nand() {
+void eq3() {
     std::cout << "\n3-way equality:\n";
     Net net(3, 1, 2, 4);
     for (int i = 0; i < 10000; ++i) {
@@ -156,7 +156,7 @@ int main() {
     std::cout.precision(2);
 
     inverter();
-    nand();
+    eq3();
     xor_();
     adder();
     divisible_by_three();
