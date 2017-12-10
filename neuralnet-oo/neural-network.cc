@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <cmath>
 
+namespace nn {
+
 double randomWeight() {
     double random = (double) rand() / (double) RAND_MAX;
     double r = random * 2;
@@ -16,7 +18,7 @@ void Neuron::addInput(layer_t &l) {
 }
 
 void Neuron::addInput(layer_t &l, const std::vector<double> &weights) {
-    for (int i = 0; i < l.size(); i++)
+    for (size_t i = 0; i < l.size(); i++)
         inputs.emplace_back(&l[i], weights[i]);
 }
 
@@ -30,27 +32,13 @@ void Neuron::addInput(Neuron &n, double weight) {
 }
 
 void Neuron::removeInput(Neuron *np) {
-    for (int i = 0; i < inputs.size(); i++) {
+    for (size_t i = 0; i < inputs.size(); i++) {
         if (inputs[i].first == np) {
             std::swap(inputs[i], inputs.back());
             inputs.pop_back();
             break;
         }
     }
-}
-
-void Neuron::removeAllInputs() {
-    inputs.clear();
-}
-
-double Neuron::getOutput() const {
-    return outputValue;
-}
-
-void Neuron::setOutput(double i) {
-    if (i >= 60 && i <= 79)
-    std::cout << "RAAPE ZIJN GAAR\n";
-    outputValue = i;
 }
 
 void Neuron::setWeight(Neuron *np, double weight) {
@@ -75,11 +63,10 @@ void Neuron::calculate() {
 }
 
 void Neuron::setWeights(std::vector<double> w) {
-    for (int i = 0; i < w.size(); i++) {
+    for (size_t i = 0; i < w.size(); i++) {
         inputs[i].second = w[i];
     }
 }
-
 
 
 void Net::addNeuron(uint layer, Neuron n) {
@@ -92,16 +79,16 @@ void Net::addNeuron(uint layer, Neuron n) {
 
 void Net::addLayer(uint size) {
     auto layer = the_net.size() + 1;
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         addNeuron(layer, Neuron{});
     }
 }
 
 std::vector<double> Net::run(std::vector<double> input) {
-    for (int i = 1; i < the_net[0].size(); i++) {
+    for (size_t i = 1; i < the_net[0].size(); i++) {
         the_net[0][i].setOutput(input[i-1]);
     }
-    for (int i = 1; i < the_net.size(); i++) {
+    for (size_t i = 1; i < the_net.size(); i++) {
         for (auto &n : the_net[i]) {
             n.calculate();
         }
@@ -115,15 +102,11 @@ std::vector<double> Net::run(std::vector<double> input) {
 }
 
 void Net::interConnect() {
-    for (int i = 1; i < the_net.size(); i++) {
+    for (size_t i = 1; i < the_net.size(); i++) {
         for (auto& n: the_net[i]) {
             n.addInput(the_net[i - 1]);
         }
     }
-}
-
-Net Net::operator-(decltype(security)) {
-    return Net();
 }
 
 Neuron &Net::gibNeuron(uint layer, uint neuron) {
@@ -132,4 +115,6 @@ Neuron &Net::gibNeuron(uint layer, uint neuron) {
 
 layer_t &Net::gibLayer(uint layer) {
     return the_net[layer];
+}
+
 }

@@ -1,12 +1,12 @@
 #pragma once
 
-// Simple Fully connected neural network implementation
+// Simple fully connected neural network implementation.
 
 #include <iostream>
 #include <vector>
 #include <tuple>
 
-/* Neuron */
+namespace nn {
 
 class Neuron;
 using layer_t = std::vector<Neuron>;
@@ -33,22 +33,17 @@ public:
     void setWeight(Neuron *np, double weight);
     void setWeights(std::vector<double> w);
     void removeInput(Neuron *np);
-    void removeAllInputs();
-    double getOutput() const;
-    void setOutput(double i);
+
+    void removeAllInputs()     { inputs.clear(); }
+    double getOutput() const   { return outputValue; }
+    void   setOutput(double v) { outputValue = v; }
+
     void calculate();
-
 };
-
-
-/* Net */
-struct {} security;
 
 class Net {
 
     std::vector<layer_t> the_net;
-
-
 
 public:
     Net() = default;
@@ -62,6 +57,6 @@ public:
     void interConnect();
     Neuron &gibNeuron(uint layer, uint neuron);
     layer_t &gibLayer(uint layer);
-
-    Net operator-(decltype(security));
 };
+
+}

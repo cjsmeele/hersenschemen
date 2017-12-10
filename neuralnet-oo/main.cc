@@ -1,5 +1,6 @@
 #include "neural-network.hh"
 
+using namespace nn;
 
 int main() {
     srand(time(0));
@@ -10,6 +11,8 @@ int main() {
         layer_t{ Neuron{1}, Neuron{}, Neuron{}},
         layer_t{ Neuron{},  Neuron{}}
     }};
+
+    // NAND adder (with step fn and no backprop):
 
     ketnet.gibNeuron(1, 1).addInput(ketnet.gibLayer(0), {2, -1, -1});
     ketnet.gibNeuron(2, 1).addInput(ketnet.gibLayer(1), {2, -1});
