@@ -2,8 +2,10 @@
 
 // Simple fully connected neural network implementation.
 
+#include "common.hh"
 #include <vector>
 #include <tuple>
+#include <memory>
 
 namespace nn {
 
@@ -13,12 +15,34 @@ using layer_t = std::vector<Neuron>;
 
 class Neuron {
 
+    static constexpr double eta = 0.1;
+
+    struct Link {
+        Neuron *src, *dst;
+        double weight;
+        double weight_;
+
+        Link(Neuron *src, Neuron *dst, double weight)
+            : src(src),
+              dst(dst),
+              weight(weight),
+              weight_(weight)
+            { }
+    };
+
+    /// Used during training.
+    double sum   = 0;
+    double delta = 0;
+
     /// The current value.
     double value;
 
-    using input_t = std::pair<Neuron*, double>; //Neuron and weight
-    std::vector<input_t> inputs;
+    std::vector<std::unique_ptr<Link>>  inputs;
+    std::vector<Link*> outputs;
 
+
+    static double g(double z);
+    static double g_(double z);
 
 public:
     Neuron(double initialValue = 0)
@@ -28,13 +52,14 @@ public:
     void addInput(Neuron *n);
     void addInput(Neuron *n, double weight);
 
-    const std::vector<input_t> getInputs() const { return inputs; }
-    std::vector<input_t>       getInputs()       { return inputs; }
+    const std::vector<std::unique_ptr<Link>> &getInputs() const { return inputs; }
 
-    double getOutput() const   { return value; }
-    void   setOutput(double v) { value = v; }
+    double getValue() const   { return value; }
+    void   setValue(double v) { value = v; }
 
     void update();
+    void doeNouEensEvenConformDeMaatschappelijkeNormenEnWaarden(double y = 0);
+    void flush();
 };
 
 class Net {
@@ -43,8 +68,8 @@ class Net {
 
 public:
     Net() = default;
-    Net(const std::vector<layer_t> &layers)
-        : layers(layers)
+    Net(std::vector<layer_t> &&layers)
+        : layers(std::move(layers))
         { }
 
     Net(uint inputCount,
@@ -61,12 +86,37 @@ public:
     void connect(const Connection &c);
     void connect(const std::vector<Connection> &c);
 
-    std::vector<double> run(std::vector<double> input);
+    std::vector<double> run(const std::vector<double> &input);
+
+    void train(const std::vector<double> &input,
+               const std::vector<double> &expected);
+
+    const std::vector<layer_t> &getLayers() const { return layers; }
 
     const Neuron &getNeuron(uint layer, uint neuron) const { return layers[layer][neuron]; }
           Neuron &getNeuron(uint layer, uint neuron)       { return layers[layer][neuron]; }
     const layer_t &getLayer(uint layer) const { return layers[layer]; }
           layer_t &getLayer(uint layer)       { return layers[layer]; }
 };
+
+template<typename S>
+S &operator<<(S& s, const Net &v) {
+    for (const auto &l : v.getLayers()) {
+        s << "[";
+        for (const auto &n : l) {
+            s << ' ';
+            if (n.getInputs().size()) {
+                s << '<';
+                for (auto &o : n.getInputs()) {
+                    s << ' ' << o->weight;
+                }
+                s << '>';
+            }
+            // s << n.getValue();
+        }
+        s << " ]\n";
+    }
+    return s;
+}
 
 }
