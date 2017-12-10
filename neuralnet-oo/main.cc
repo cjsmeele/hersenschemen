@@ -1,4 +1,6 @@
 #include "neural-network.hh"
+#include <cstdlib>
+#include <ctime>
 
 using namespace nn;
 
@@ -13,41 +15,23 @@ int main() {
     }};
 
     // NAND adder (with step fn and no backprop):
-
-    ketnet.gibNeuron(1, 1).addInput(ketnet.gibLayer(0), {2, -1, -1});
-    ketnet.gibNeuron(2, 1).addInput(ketnet.gibLayer(1), {2, -1});
-    ketnet.gibNeuron(2, 1).addInput(ketnet.gibNeuron(0, 1), -1);
-    ketnet.gibNeuron(2, 2).addInput(ketnet.gibLayer(1), {2, -1});
-    ketnet.gibNeuron(2, 2).addInput(ketnet.gibNeuron(0, 2), -1);
-    ketnet.gibNeuron(3, 0).addInput(ketnet.gibNeuron(2, 0), 1);
-    ketnet.gibNeuron(3, 0).addInput(ketnet.gibNeuron(1, 1), -1);
-    ketnet.gibNeuron(3, 1).addInput(ketnet.gibLayer(2), {2, -1, -1});
-
-//  ketnet.interConnect()
+    ketnet.connect({ /* 1,1: NAND 1.   */ { 0,0, 1,1,  2 }, { 0,1, 1,1, -1 }, { 0,2, 1,1, -1 },
+                     /* 2,1: NAND 2.   */ { 1,0, 2,1,  2 }, { 0,1, 2,1, -1 }, { 1,1, 2,1, -1 },
+                     /* 2,2: NAND 3.   */ { 0,2, 2,2, -1 }, { 1,0, 2,2,  2 }, { 1,1, 2,2, -1 },
+                     /* 3,0: Inverter. */ { 2,0, 3,0,  1 }, { 1,1, 3,0, -1 },
+                     /* 3,1: NAND 4.   */ { 2,0, 3,1,  2 }, { 2,1, 3,1, -1 }, { 2,2, 3,1, -1 }});
 
     auto result = ketnet.run({0, 0});
-    std::cout << "Results are in!:\n";
-    for (const auto &r : result) {
-        std::cout << r << ' ';
-    }
+    for (const auto &r : result) std::cout << r << ' ';
     std::cout << '\n';
     result = ketnet.run({0, 1});
-    std::cout << "Results are in!:\n";
-    for (const auto &r : result) {
-        std::cout << r << ' ';
-    }
+    for (const auto &r : result) std::cout << r << ' ';
     std::cout << '\n';
     result = ketnet.run({1, 0});
-    std::cout << "Results are in!:\n";
-    for (const auto &r : result) {
-        std::cout << r << ' ';
-    }
+    for (const auto &r : result) std::cout << r << ' ';
     std::cout << '\n';
     result = ketnet.run({1, 1});
-    std::cout << "Results are in!:\n";
-    for (const auto &r : result) {
-        std::cout << r << ' ';
-    }
+    for (const auto &r : result) std::cout << r << ' ';
     std::cout << '\n';
 
     std::cout << "Skynet sais hello" << std::endl;

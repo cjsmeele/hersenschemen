@@ -14,21 +14,21 @@ double randomWeight() {
 
 void Neuron::addInput(layer_t &l) {
     for (auto &n : l)
-        inputs.emplace_back(&n, randomWeight());
+        addInput(&n);
 }
 
 void Neuron::addInput(layer_t &l, const std::vector<double> &weights) {
     for (size_t i = 0; i < l.size(); i++)
-        inputs.emplace_back(&l[i], weights[i]);
+        addInput(&l[i], weights[i]);
 }
 
-void Neuron::addInput(Neuron &n) {
-    inputs.emplace_back(&n, randomWeight());
+void Neuron::addInput(Neuron *n) {
+    addInput(n, randomWeight());
 }
 
 
-void Neuron::addInput(Neuron &n, double weight) {
-    inputs.emplace_back(&n, weight);
+void Neuron::addInput(Neuron *n, double weight) {
+    inputs.emplace_back(n, weight);
 }
 
 void Neuron::removeInput(Neuron *np) {
@@ -51,7 +51,10 @@ void Neuron::setWeight(Neuron *np, double weight) {
 }
 
 void Neuron::calculate() {
-    if (inputs.empty()) return;
+    if (inputs.empty())
+        // This is a neuron without inputs (i.e. bias).
+        return;
+
     outputValue = 0;
     for (const auto &n : inputs) {
         outputValue += n.first->getOutput() * n.second;
@@ -62,59 +65,56 @@ void Neuron::calculate() {
     outputValue = outputValue > 0;
 }
 
-void Neuron::setWeights(std::vector<double> w) {
-    for (size_t i = 0; i < w.size(); i++) {
+void Neuron::setWeights(const std::vector<double> &w) {
+    for (size_t i = 0; i < w.size(); i++)
         inputs[i].second = w[i];
-    }
 }
 
 
 void Net::addNeuron(uint layer, Neuron n) {
-    if (the_net.size() <  layer - 1)
+    if (layers.size() <  layer - 1)
         return;
-    if (the_net.size() == layer - 1)
-        the_net.emplace_back(layer_t{ Neuron{1} }); // if the layer does not exist, make one and add a bias
-    the_net[layer].emplace_back(std::move(n));
+    if (layers.size() == layer - 1)
+        layers.emplace_back(layer_t{ Neuron{-1} }); // if the layer does not exist, make one and add a bias
+    layers[layer].emplace_back(std::move(n));
 }
 
 void Net::addLayer(uint size) {
-    auto layer = the_net.size() + 1;
-    for (size_t i = 0; i < size; i++) {
+    auto layer = layers.size() + 1;
+    for (size_t i = 0; i < size; i++)
         addNeuron(layer, Neuron{});
-    }
+}
+
+void Net::connect() {
+    for (size_t i = 1; i < layers.size(); i++)
+        for (auto &n: layers[i])
+            n.addInput(layers[i - 1]);
+}
+
+void Net::connect(const Connection &c) {
+    getNeuron(c.dstL, c.dstN)
+        .addInput(&getNeuron(c.srcL, c.srcN),
+                  c.weight);
+}
+void Net::connect(const std::vector<Net::Connection> &cs) {
+    for (const auto &c : cs)
+        connect(c);
 }
 
 std::vector<double> Net::run(std::vector<double> input) {
-    for (size_t i = 1; i < the_net[0].size(); i++) {
-        the_net[0][i].setOutput(input[i-1]);
-    }
-    for (size_t i = 1; i < the_net.size(); i++) {
-        for (auto &n : the_net[i]) {
+    for (size_t i = 1; i < layers[0].size(); i++)
+        layers[0][i].setOutput(input[i-1]);
+
+    for (size_t i = 1; i < layers.size(); i++) {
+        for (auto &n : layers[i])
             n.calculate();
-        }
     }
 
-    std::vector<double> r;
-    for (auto &n : the_net.back()) {
-        r.push_back(n.getOutput());
-    }
-    return r;
-}
+    std::vector<double> res;
+    for (auto &n : layers.back())
+        res.push_back(n.getOutput());
 
-void Net::interConnect() {
-    for (size_t i = 1; i < the_net.size(); i++) {
-        for (auto& n: the_net[i]) {
-            n.addInput(the_net[i - 1]);
-        }
-    }
-}
-
-Neuron &Net::gibNeuron(uint layer, uint neuron) {
-    return the_net[layer][neuron];
-}
-
-layer_t &Net::gibLayer(uint layer) {
-    return the_net[layer];
+    return res;
 }
 
 }
