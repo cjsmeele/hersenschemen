@@ -2,7 +2,6 @@
 
 // Simple fully connected neural network implementation.
 
-#include <iostream>
 #include <vector>
 #include <tuple>
 
@@ -15,7 +14,7 @@ using layer_t = std::vector<Neuron>;
 class Neuron {
 
     /// The current value.
-    double outputValue;
+    double value;
 
     using input_t = std::pair<Neuron*, double>; //Neuron and weight
     std::vector<input_t> inputs;
@@ -23,22 +22,19 @@ class Neuron {
 
 public:
     Neuron(double initialValue = 0)
-        : outputValue(initialValue)
+        : value(initialValue)
         { }
 
-    void addInput(layer_t &l);
-    void addInput(layer_t &l, const std::vector<double> &weights);
     void addInput(Neuron *n);
     void addInput(Neuron *n, double weight);
-    void setWeight(Neuron *np, double weight);
-    void setWeights(const std::vector<double> &w);
-    void removeInput(Neuron *np);
 
-    void removeAllInputs()     { inputs.clear(); }
-    double getOutput() const   { return outputValue; }
-    void   setOutput(double v) { outputValue = v; }
+    const std::vector<input_t> getInputs() const { return inputs; }
+    std::vector<input_t>       getInputs()       { return inputs; }
 
-    void calculate();
+    double getOutput() const   { return value; }
+    void   setOutput(double v) { value = v; }
+
+    void update();
 };
 
 class Net {
@@ -55,9 +51,6 @@ public:
         uint hiddenCount,
         uint outputCount,
         uint neuronsPerHiddenLayer);
-
-    void addNeuron(uint layer, Neuron n);
-    void addLayer(uint size);
 
     struct Connection {
         uint srcL, srcN;
