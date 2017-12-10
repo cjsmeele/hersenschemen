@@ -49,7 +49,7 @@ Net::Net(uint inputCount,
     layers.front().resize(inputCount + 1);
     layers.back().resize(outputCount);
     for (size_t i = 1; i < layers.size() - 1; ++i) {
-        layers[i].resize(neuronsPerHiddenLayer);
+        layers[i].resize(neuronsPerHiddenLayer + 1);
         layers[i][0].setValue(-1);
     }
 
@@ -59,10 +59,13 @@ Net::Net(uint inputCount,
 }
 
 void Net::connect() {
-    for (size_t i = 1; i < layers.size(); i++)
-        for (auto &n: layers[i])
-            for (auto &n2: layers[i-1])
-                n.addInput(&n2);
+    for (size_t i = 1; i < layers.size(); ++i) {
+        for (size_t j = (i == layers.size()-1 ? 0 : 1);
+             j < layers[i].size(); ++j) {
+            for (auto &n: layers[i-1])
+                layers[i][j].addInput(&n);
+        }
+    }
 }
 
 void Net::connect(const Connection &c) {

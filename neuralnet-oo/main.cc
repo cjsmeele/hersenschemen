@@ -123,8 +123,8 @@ void adder() {
 void divisible_by_three() {
     std::cout << "\n6-bit divisible by three checker (YMMV):\n";
 
-    Net net(6, 1, 3, 4);
-    for (int i = 0; i < 10000; ++i) {
+    Net net(6, 1, 3, 3);
+    for (int i = 0; i < 20000; ++i) {
         for (int j = 0; j < 64; ++j)
             net.train({ (double)((j>>5)&1),
                         (double)((j>>4)&1),
