@@ -28,7 +28,7 @@ double Neuron::g_(double z) {
     return g(z) * (1 - g(z));
 }
 
-void Neuron::update() {
+void Neuron::propagateForward() {
     if (inputs.empty())
         // This is a neuron without inputs (i.e. bias).
         return;
@@ -83,10 +83,10 @@ std::vector<double> Net::run(const std::vector<double> &input) {
     for (size_t i = 1; i < layers[0].size(); i++)
         layers[0][i].setValue(input[i-1]);
 
-    // Update all other neurons.
+    // propagateForward all other neurons.
     for (size_t i = 1; i < layers.size(); i++) {
         for (auto &n : layers[i])
-            n.update();
+            n.propagateForward();
     }
 
     // Collect output values.
@@ -97,7 +97,7 @@ std::vector<double> Net::run(const std::vector<double> &input) {
     return res;
 }
 
-void Neuron::doeNouEensEvenConformDeMaatschappelijkeNormenEnWaarden(double y) {
+void Neuron::propagateBackward(double y) {
 
     auto a = value;
 
@@ -118,7 +118,6 @@ void Neuron::doeNouEensEvenConformDeMaatschappelijkeNormenEnWaarden(double y) {
             l->weight_ = l->weight + eta * l->src->value * delta;
         }
     }
-
 }
 
 void Neuron::flush() {
@@ -148,9 +147,9 @@ void Net::train(const std::vector<double> &input,
         for (size_t j = 0; j < layers[i].size(); ++j) {
             auto &n = layers[i][j];
             if (i == (int)layers.size()-1)
-                n.doeNouEensEvenConformDeMaatschappelijkeNormenEnWaarden(expected[j]);
+                n.propagateBackward(expected[j]);
             else
-                n.doeNouEensEvenConformDeMaatschappelijkeNormenEnWaarden();
+                n.propagateBackward();
         }
     }
 

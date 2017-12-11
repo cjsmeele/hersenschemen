@@ -123,7 +123,7 @@ void adder() {
 void divisible_by_three() {
     std::cout << "\n6-bit divisible by three checker (YMMV):\n";
 
-    Net net(6, 1, 3, 3);
+    Net net(6, 1, 1, 5);
     for (int i = 0; i < 20000; ++i) {
         for (int j = 0; j < 64; ++j)
             net.train({ (double)((j>>5)&1),
@@ -152,7 +152,7 @@ void divisible_by_three() {
 }
 
 int main() {
-    srand(time(0));
+    srand(time(NULL));
     std::cout.precision(2);
 
     inverter();
