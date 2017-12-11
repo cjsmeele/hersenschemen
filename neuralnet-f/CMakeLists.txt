@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
-project(neuralnet_f)
+project(nn)
 
+add_compile_options(-Wall -Wextra -pedantic -g3 -O3)
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(neuralnet_f main.cpp)
+set(SOURCE_FILES main.cc)
+add_executable(nn ${SOURCE_FILES})

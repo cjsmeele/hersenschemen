@@ -18,8 +18,11 @@ namespace nn {
              typename Eta = std::ratio<1,10>>
     class Neuron : ActivationPolicy {
 
-        static constexpr double eta = (double)Eta::num / Eta::den;
+    public:
+        static constexpr double eta        = (double)Eta::num / Eta::den;
+        static constexpr double biasValue  = -1;
 
+    private:
         struct Link {
             Neuron *src, *dst;
             double weight;

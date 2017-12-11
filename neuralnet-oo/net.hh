@@ -14,9 +14,11 @@ namespace nn {
              typename Eta = std::ratio<1,10>>
     class Net : ActivationPolicy {
 
+    public:
         using Neuron_t = Neuron<ActivationPolicy,Eta>;
         using layer_t  = std::vector<Neuron_t>;
 
+    private:
         std::vector<layer_t> layers;
 
     public:
@@ -35,10 +37,10 @@ namespace nn {
             layers.back().resize(outputCount);
             for (size_t i = 1; i < layers.size() - 1; ++i) {
                 layers[i].resize(neuronsPerHiddenLayer + 1);
-                layers[i][0].setValue(-1);
+                layers[i][0].setValue(Neuron_t::biasValue);
             }
 
-            layers.front()[0].setValue(-1);
+            layers.front()[0].setValue(Neuron_t::biasValue);
 
             connect();
         }
@@ -120,6 +122,7 @@ namespace nn {
         }
 
         const std::vector<layer_t> &getLayers() const { return layers; }
+              std::vector<layer_t> &getLayers()       { return layers; }
 
         const layer_t &getLayer(uint layer) const { return layers[layer]; }
               layer_t &getLayer(uint layer)       { return layers[layer]; }
