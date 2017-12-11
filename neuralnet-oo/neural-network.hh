@@ -20,7 +20,7 @@ class Neuron {
     struct Link {
         Neuron *src, *dst;
         double weight;
-        double weight_;
+        double weight_; // Temporary value during updates.
 
         Link(Neuron *src, Neuron *dst, double weight)
             : src(src),
@@ -40,7 +40,7 @@ class Neuron {
     std::vector<std::unique_ptr<Link>>  inputs;
     std::vector<Link*> outputs;
 
-
+    // Wiskunde == leesbaar
     static double g(double z);
     static double g_(double z);
 
@@ -57,8 +57,11 @@ public:
     double getValue() const   { return value; }
     void   setValue(double v) { value = v; }
 
-    void update();
-    void doeNouEensEvenConformDeMaatschappelijkeNormenEnWaarden(double y = 0);
+    void propagateForward();
+    void propagateBackward(double y = 0);
+
+    /// Flush weight changes after all weights have been calculated by
+    /// propagateBackward.
     void flush();
 };
 
