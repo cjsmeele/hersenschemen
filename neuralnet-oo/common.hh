@@ -16,7 +16,7 @@ S &operator<<(S& s, const std::vector<T> &v) {
 
 #include <cmath>
 
-// Uncomment to roud all floats before printing.
+// Uncomment to round all floats before printing.
 //
 // template<typename S>
 // S &operator<<(S& s, const std::vector<double> &v) {

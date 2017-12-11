@@ -1,44 +1,46 @@
 #include "common.hh"
-#include "neural-network.hh"
+#include "net.hh"
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
 
 using namespace nn;
 
-// void adder() {
-//     Net ketnet {{
-//         layer_t{ Neuron{1}, Neuron{}, Neuron{} },
-//         layer_t{ Neuron{1}, Neuron{} },
-//         layer_t{ Neuron{1}, Neuron{}, Neuron{}},
-//         layer_t{ Neuron{},  Neuron{}}
-//     }};
+// Opdracht 4.2
+void manual_adder() {
+    // Net<StepActivationPolicy> ketnet {{
+    //     layer_t{ Neuron{1}, Neuron{}, Neuron{} },
+    //     layer_t{ Neuron{1}, Neuron{} },
+    //     layer_t{ Neuron{1}, Neuron{}, Neuron{}},
+    //     layer_t{ Neuron{},  Neuron{}}
+    // }};
+    Net<StepActivationPolicy> ketnet;
 
-//     // NAND adder (with step fn and no backprop):
-//     ketnet.connect({ /* 1,1: NAND 1.   */ { 0,0, 1,1,  2 }, { 0,1, 1,1, -1 }, { 0,2, 1,1, -1 },
-//                      /* 2,1: NAND 2.   */ { 1,0, 2,1,  2 }, { 0,1, 2,1, -1 }, { 1,1, 2,1, -1 },
-//                      /* 2,2: NAND 3.   */ { 0,2, 2,2, -1 }, { 1,0, 2,2,  2 }, { 1,1, 2,2, -1 },
-//                      /* 3,0: Inverter. */ { 2,0, 3,0,  1 }, { 1,1, 3,0, -1 },
-//                      /* 3,1: NAND 4.   */ { 2,0, 3,1,  2 }, { 2,1, 3,1, -1 }, { 2,2, 3,1, -1 }});
+    // NAND adder (with step fn and no backprop):
+    ketnet.connect({ /* 1,1: NAND 1.   */ { 0,0, 1,1,  2 }, { 0,1, 1,1, -1 }, { 0,2, 1,1, -1 },
+                     /* 2,1: NAND 2.   */ { 1,0, 2,1,  2 }, { 0,1, 2,1, -1 }, { 1,1, 2,1, -1 },
+                     /* 2,2: NAND 3.   */ { 0,2, 2,2, -1 }, { 1,0, 2,2,  2 }, { 1,1, 2,2, -1 },
+                     /* 3,0: Inverter. */ { 2,0, 3,0,  1 }, { 1,1, 3,0, -1 },
+                     /* 3,1: NAND 4.   */ { 2,0, 3,1,  2 }, { 2,1, 3,1, -1 }, { 2,2, 3,1, -1 }});
 
-//     auto result = ketnet.run({0, 0});
-//     for (const auto &r : result) std::cout << r << ' ';
-//     std::cout << '\n';
-//     result = ketnet.run({0, 1});
-//     for (const auto &r : result) std::cout << r << ' ';
-//     std::cout << '\n';
-//     result = ketnet.run({1, 0});
-//     for (const auto &r : result) std::cout << r << ' ';
-//     std::cout << '\n';
-//     result = ketnet.run({1, 1});
-//     for (const auto &r : result) std::cout << r << ' ';
-//     std::cout << '\n';
-// }
+    auto result = ketnet.run({0, 0});
+    for (const auto &r : result) std::cout << r << ' ';
+    std::cout << '\n';
+    result = ketnet.run({0, 1});
+    for (const auto &r : result) std::cout << r << ' ';
+    std::cout << '\n';
+    result = ketnet.run({1, 0});
+    for (const auto &r : result) std::cout << r << ' ';
+    std::cout << '\n';
+    result = ketnet.run({1, 1});
+    for (const auto &r : result) std::cout << r << ' ';
+    std::cout << '\n';
+}
 
 void inverter() {
     std::cout << "\nInverter:\n";
-    Net net(1, 1, 0, 0);
-    for (int i = 0; i < 10000; ++i) {
+    Net<SigmoidActivationPolicy,std::ratio<1,10>> net(1, 1, 0, 0);
+    for (int i = 0; i < 20000; ++i) {
         net.train({ 0 }, { 1 });
         net.train({ 1 }, { 0 });
     }
@@ -51,7 +53,7 @@ void inverter() {
 
 void eq3() {
     std::cout << "\n3-way equality:\n";
-    Net net(3, 1, 2, 4);
+    Net<> net(3, 1, 2, 4);
     for (int i = 0; i < 10000; ++i) {
         net.train({ 0, 0, 0 }, { 1 });
         net.train({ 0, 0, 1 }, { 0 });
@@ -77,7 +79,7 @@ void eq3() {
 
 void xor_() {
     std::cout << "\n3-way XOR-ish gate:\n";
-    Net net(3, 1, 2, 4);
+    Net<> net(3, 1, 2, 4);
     for (int i = 0; i < 10000; ++i) {
         net.train({ 0, 0, 0 }, { 0 });
         net.train({ 0, 0, 1 }, { 1 });
@@ -104,7 +106,7 @@ void xor_() {
 void adder() {
     std::cout << "\nHalf adder:\n";
 
-    Net net(2, 2, 1, 2);
+    Net<> net(2, 2, 1, 2);
     for (int i = 0; i < 10000; ++i) {
         net.train({ 0, 0 }, { 0, 0 });
         net.train({ 0, 1 }, { 1, 0 });
@@ -123,9 +125,18 @@ void adder() {
 void divisible_by_three() {
     std::cout << "\n6-bit divisible by three checker (YMMV):\n";
 
-    Net net(6, 1, 1, 5);
+    Net<> net(6, 1, 1, 5);
     for (int i = 0; i < 20000; ++i) {
-        for (int j = 0; j < 64; ++j)
+        for (int j = 0; j < 64; ++j) {
+            if (j % 3 == 0) {
+                net.train({ (double)((j>>5)&1),
+                            (double)((j>>4)&1),
+                            (double)((j>>3)&1),
+                            (double)((j>>2)&1),
+                            (double)((j>>1)&1),
+                            (double)( j    &1) },
+                        { (double)(j % 3 == 0) });
+            }
             net.train({ (double)((j>>5)&1),
                         (double)((j>>4)&1),
                         (double)((j>>3)&1),
@@ -133,6 +144,7 @@ void divisible_by_three() {
                         (double)((j>>1)&1),
                         (double)( j    &1) },
                       { (double)(j % 3 == 0) });
+        }
     }
 
     std::cout << net << "\n";
