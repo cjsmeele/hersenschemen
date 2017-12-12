@@ -5,30 +5,35 @@
 namespace nn {
 
     struct SigmoidActivationPolicy {
-        double g(double z)  { return 1 / (1 + exp(-z)); }
-        double g_(double z) { return g(z) * (1 - g(z)); }
+        template<typename T>
+        T g(T z)  { return 1 / (1 + exp(-z)); }
+        template<typename T>
+        T g_(T z) { return g(z) * (1 - g(z)); }
     };
 
     struct StepActivationPolicy {
-        double g(double z)  { return z > 0; }
-        double g_(double z) { return z*0; }
+        template<typename T>
+        T g(T z)  { return z > 0; }
+        template<typename T>
+        T g_(T z) { return z*0; }
     };
 
-    template<typename ActivationPolicy = SigmoidActivationPolicy,
+    template<typename T = double,
+             typename ActivationPolicy = SigmoidActivationPolicy,
              typename Eta = std::ratio<1,10>>
     class Neuron : ActivationPolicy {
 
     public:
-        static constexpr double eta        = (double)Eta::num / Eta::den;
-        static constexpr double biasValue  = -1;
+        static constexpr T eta        = (T)Eta::num / Eta::den;
+        static constexpr T biasValue  = -1;
 
     private:
         struct Link {
             Neuron *src, *dst;
-            double weight;
-            double weight_; // Temporary value during updates.
+            T weight;
+            T weight_; // Temporary value during updates.
 
-            Link(Neuron *src, Neuron *dst, double weight)
+            Link(Neuron *src, Neuron *dst, T weight)
                 : src(src),
                   dst(dst),
                   weight(weight),
@@ -37,11 +42,11 @@ namespace nn {
         };
 
         /// Used during training.
-        double sum   = 0;
-        double delta = 0;
+        T sum   = 0;
+        T delta = 0;
 
         /// The current value.
-        double value;
+        T value;
 
         std::vector<std::unique_ptr<Link>>  inputs;
         std::vector<Link*> outputs;
@@ -51,22 +56,22 @@ namespace nn {
         using ActivationPolicy::g_;
 
     public:
-        Neuron(double initialValue = 0)
+        Neuron(T initialValue = 0)
             : value(initialValue)
             { }
 
         void addInput(Neuron *n) {
-            addInput(n, ((double)rand() / RAND_MAX) * 2 - 1);
+            addInput(n, ((T)rand() / RAND_MAX) * 2 - 1);
         }
-        void addInput(Neuron *n, double weight) {
+        void addInput(Neuron *n, T weight) {
             inputs.emplace_back(new Link(n, this, weight));
             n->outputs.push_back(inputs.back().get());
         }
 
         const std::vector<std::unique_ptr<Link>> &getInputs() const { return inputs; }
 
-        double getValue() const   { return value; }
-        void   setValue(double v) { value = v; }
+        T      getValue() const { return value; }
+        void   setValue(T v)    { value = v; }
 
         void propagateForward() {
             if (inputs.empty())
@@ -80,13 +85,13 @@ namespace nn {
             value = g(sum);
         }
 
-        void propagateBackward(double y = 0) {
+        void propagateBackward(T y = 0) {
 
             auto a = value;
 
             if (outputs.size()) {
                 // Wiskunde == leesbaar
-                double sigmaDeltaPAccent = 0;
+                T sigmaDeltaPAccent = 0;
                 for (auto ol : outputs)
                     sigmaDeltaPAccent += ol->weight * ol->dst->delta;
 

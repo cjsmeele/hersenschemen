@@ -10,12 +10,13 @@
 
 namespace nn {
 
-    template<typename ActivationPolicy = SigmoidActivationPolicy,
+    template<typename T = double,
+             typename ActivationPolicy = SigmoidActivationPolicy,
              typename Eta = std::ratio<1,10>>
     class Net : ActivationPolicy {
 
     public:
-        using Neuron_t = Neuron<ActivationPolicy,Eta>;
+        using Neuron_t = Neuron<T,ActivationPolicy,Eta>;
         using layer_t  = std::vector<Neuron_t>;
 
     private:
@@ -48,7 +49,7 @@ namespace nn {
         struct Connection {
             uint srcL, srcN;
             uint dstL, dstN;
-            double weight;
+            T weight;
         };
         void connect() {
             for (size_t i = 1; i < layers.size(); ++i) {
@@ -69,7 +70,7 @@ namespace nn {
                 connect(c);
         }
 
-        std::vector<double> run(const std::vector<double> &input) {
+        std::vector<T> run(const std::vector<T> &input) {
             // Set input neurons.
             for (size_t i = 1; i < layers[0].size(); i++)
                 layers[0][i].setValue(input[i-1]);
@@ -81,19 +82,19 @@ namespace nn {
             }
 
             // Collect output values.
-            std::vector<double> res;
+            std::vector<T> res;
             for (auto &n : layers.back())
                 res.push_back(n.getValue());
 
             return res;
         }
 
-        void train(const std::vector<double> &input,
-                   const std::vector<double> &expected) {
+        void train(const std::vector<T> &input,
+                   const std::vector<T> &expected) {
 
             auto results = run(input);
 
-            // double delta = 0;
+            // T delta = 0;
 
             // for (size_t i = 0; i < layers.back().size(); ++i) {
             //     auto &n = layers.back()[i];
@@ -101,7 +102,7 @@ namespace nn {
             //     auto y = expected[i];
             //     delta += pow(y - a, 2);
             // }
-            // double mse = delta / (2 * layers.back().size());
+            // T mse = delta / (2 * layers.back().size());
             // std::cout << "MSE:" << mse << "\n";
 
             for (int i = layers.size()-1; i >= 0; --i) {

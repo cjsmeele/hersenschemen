@@ -12,7 +12,7 @@ using namespace nn;
 void manual_nor() {
     std::cout << "\nManually trained NOR gate:\n";
 
-    Net<StepActivationPolicy> ketnet;
+    Net<double,StepActivationPolicy> ketnet;
 
     auto &layers = ketnet.getLayers();
     layers.resize(2);
@@ -42,7 +42,7 @@ void manual_nor() {
 void manual_adder() {
     std::cout << "\nManually trained half adder:\n";
 
-    Net<StepActivationPolicy> ketnet;
+    Net<double,StepActivationPolicy> ketnet;
 
     auto &layers = ketnet.getLayers();
     layers.resize(4);
@@ -70,7 +70,7 @@ void manual_adder() {
 
 void inverter() {
     std::cout << "\nInverter:\n";
-    Net<SigmoidActivationPolicy,std::ratio<1,10>> net(1, 1, 0, 0);
+    Net<double,SigmoidActivationPolicy,std::ratio<1,10>> net(1, 1, 0, 0);
     for (int i = 0; i < 20000; ++i) {
         net.train({ 0 }, { 1 });
         net.train({ 1 }, { 0 });
@@ -84,7 +84,7 @@ void inverter() {
 
 void eq3() {
     std::cout << "\n3-way equality:\n";
-    Net<> net(3, 1, 2, 4);
+    Net<double> net(3, 1, 2, 4);
     for (int i = 0; i < 10000; ++i) {
         net.train({ 0, 0, 0 }, { 1 });
         net.train({ 0, 0, 1 }, { 0 });
@@ -110,7 +110,7 @@ void eq3() {
 
 void xor_() {
     std::cout << "\n3-way XOR-ish gate:\n";
-    Net<> net(3, 1, 2, 4);
+    Net<double> net(3, 1, 2, 4);
     for (int i = 0; i < 10000; ++i) {
         net.train({ 0, 0, 0 }, { 0 });
         net.train({ 0, 0, 1 }, { 1 });
@@ -137,7 +137,7 @@ void xor_() {
 void adder() {
     std::cout << "\nHalf adder:\n";
 
-    Net<> net(2, 2, 1, 2);
+    Net<double> net(2, 2, 1, 2);
     for (int i = 0; i < 10000; ++i) {
         net.train({ 0, 0 }, { 0, 0 });
         net.train({ 0, 1 }, { 1, 0 });
@@ -156,7 +156,7 @@ void adder() {
 void divisible_by_three() {
     std::cout << "\n6-bit divisible by three checker (YMMV):\n";
 
-    Net<> net(6, 1, 1, 5);
+    Net<double> net(6, 1, 1, 5);
     for (int i = 0; i < 20000; ++i) {
         for (int j = 0; j < 64; ++j) {
             if (j % 3 == 0) {
@@ -200,8 +200,10 @@ enum class Iris : unsigned {
     virginica
 };
 
+using IrisType = double;
+
 struct iris_t {
-    double sepal_l, sepal_w, petal_l, petal_w;
+    IrisType sepal_l, sepal_w, petal_l, petal_w;
     Iris i;
 };
 
@@ -237,7 +239,7 @@ S &operator<<(S& s, iris_t t) {
 }
 
 void iris_dataset() {
-    Net<> net(4, 3, 2, 10);
+    Net<IrisType> net(4, 3, 2, 10);
     std::ifstream rdata("../../iris/bezdekIris.data.txt");
     std::vector<iris_t> data;
     std::vector<iris_t> test_data;
@@ -263,9 +265,9 @@ void iris_dataset() {
                         d.sepal_w,
                         d.petal_l,
                         d.petal_w },
-                      { static_cast<double>(d.i == Iris::setosa),
-                        static_cast<double>(d.i == Iris::versicolor),
-                        static_cast<double>(d.i == Iris::virginica) });
+                      { static_cast<IrisType>(d.i == Iris::setosa),
+                        static_cast<IrisType>(d.i == Iris::versicolor),
+                        static_cast<IrisType>(d.i == Iris::virginica) });
         }
         //std::cout << "trained round " << i + 1 << " of 10000\n";
     }
