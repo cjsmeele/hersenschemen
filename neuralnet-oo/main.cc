@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <fstream>
 
 using namespace nn;
 
@@ -191,17 +192,75 @@ void divisible_by_three() {
     }
 }
 
+enum Iris {
+    setosa = 0,
+    versicolor,
+    virginica
+};
+
+struct iris_t {
+    double sepal_l, sepal_w, petal_l, petal_w;
+    Iris i;
+};
+
+iris_t make_iris(std::string &raw_iris) {
+    // std::cout << raw_iris << " this was raw\n"; // DEBUG
+    return iris_t {
+            std::stof(raw_iris.substr(0,3)), // what is string view?
+            std::stof(raw_iris.substr(4,3)), // baby don't hurt me
+            std::stof(raw_iris.substr(8,3)), // i swear this works on my dataset
+            std::stof(raw_iris.substr(12,3)),//
+            [&](){
+                // lol who needs generic code when you can just assume your data's always right :)
+                switch (raw_iris[24]) { // Yes really efficient 10/10 quality code what are maps amirite?
+                    case 'o': return Iris::setosa;
+                    case 's': return Iris::versicolor;
+                    case 'g': return Iris::virginica;
+                    default: std::cout << "IF_YOU_READ_THIS_GET_A_BETTER_DATASET"; return Iris::setosa; // self documenting and everythin
+                }
+            }()
+    };
+}
+
+template<typename S>
+S &operator<<(S& s, iris_t t) {
+    s << '[' << t.sepal_l << ' ' << t.sepal_w << ' ' << t.petal_l << ' ' << t.petal_w << ' ';
+    switch (t.i) { //lol
+        case Iris::setosa:     s << "Iris-setosa";     break;
+        case Iris::versicolor: s << "Iris-versicolor"; break;
+        case Iris::virginica:  s << "Iris-virginica";  break;
+    }
+    s << "]\n";
+    return s;
+}
+
+void iris_dataset() {
+    Net<> net(4, 3, 2, 10);
+    std::ifstream rdata("../../iris/bezdekIris.data.txt");
+    std::vector<iris_t> data;
+    data.reserve(150);
+    {
+        std::string line;
+        while (std::getline(rdata, line) && line.size())
+            data.push_back(make_iris(line));
+    }
+    std::cout << data;
+
+}
+
 int main() {
     srand(time(NULL));
     std::cout.precision(2);
 
-    manual_adder();
-    manual_nor();
-    inverter();
-    eq3();
-    xor_();
-    adder();
-    divisible_by_three();
+//    manual_adder();
+//    manual_nor();
+//    inverter();
+//    eq3();
+//    xor_();
+//    adder();
+//    divisible_by_three();
+
+    iris_dataset();
 
     return 0;
 }
