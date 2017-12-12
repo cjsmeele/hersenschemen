@@ -263,11 +263,11 @@ void iris_dataset() {
                         d.sepal_w,
                         d.petal_l,
                         d.petal_w },
-                      { d.i == Iris::setosa,
-                        d.i == Iris::versicolor,
-                        d.i == Iris::virginica });
+                      { static_cast<double>(d.i == Iris::setosa),
+                        static_cast<double>(d.i == Iris::versicolor),
+                        static_cast<double>(d.i == Iris::virginica) });
         }
-        std::cout << "trained round " << i + 1 << " of 10000\n";
+        //std::cout << "trained round " << i + 1 << " of 10000\n";
     }
     std::cout << "\nNetwork is done:\n" << net << "\nCalculating score:\n";
     {
