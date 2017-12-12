@@ -267,11 +267,11 @@ void iris_dataset() {
                         d.i == Iris::versicolor,
                         d.i == Iris::virginica });
         }
-        std::cout << "trained round " << i << " of 10000\n";
+        std::cout << "trained round " << i + 1 << " of 10000\n";
     }
     std::cout << "\nNetwork is done:\n" << net << "\nCalculating score:\n";
     {
-        int correct, wrong, total;
+        int correct = 0, wrong = 0;
         for (const auto &d: test_data) {
             auto results = net.run({ d.sepal_l,
                                      d.sepal_w,
@@ -282,7 +282,7 @@ void iris_dataset() {
             if (sum != 1) { wrong++; continue; } // Bad network! You can't pull a 50/50 on me
             if (results[static_cast<unsigned>(d.i)]) correct++;
         }
-        total = correct + wrong;
+        int total = correct + wrong;
         std::cout << "Network got "
                   << correct
                   << " out of "
