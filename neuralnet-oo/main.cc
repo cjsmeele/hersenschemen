@@ -4,6 +4,8 @@
 #include <ctime>
 #include <iostream>
 #include <fstream>
+#include <random>
+#include <algorithm>
 
 using namespace nn;
 
@@ -192,7 +194,7 @@ void divisible_by_three() {
     }
 }
 
-enum Iris {
+enum class Iris : unsigned {
     setosa = 0,
     versicolor,
     virginica
@@ -222,7 +224,7 @@ iris_t make_iris(std::string &raw_iris) {
     };
 }
 
-template<typename S>
+template<typename S> // Printing beautifull flowers
 S &operator<<(S& s, iris_t t) {
     s << '[' << t.sepal_l << ' ' << t.sepal_w << ' ' << t.petal_l << ' ' << t.petal_w << ' ';
     switch (t.i) { //lol
@@ -238,14 +240,57 @@ void iris_dataset() {
     Net<> net(4, 3, 2, 10);
     std::ifstream rdata("../../iris/bezdekIris.data.txt");
     std::vector<iris_t> data;
+    std::vector<iris_t> test_data;
     data.reserve(150);
     {
         std::string line;
         while (std::getline(rdata, line) && line.size())
             data.push_back(make_iris(line));
     }
-    std::cout << data;
-
+    // std::cout << data;
+    // Who needs performance when you can shuffle vectors?
+    {
+        std::random_device r;
+        std::mt19937 engine(r());
+        std::shuffle(data.begin(), data.end(), engine); // every day i'm shuffelin'
+    }
+    // get some validation data
+    for (int _ = 0; _ < 50; _++) { test_data.push_back(data.back()); data.pop_back(); }
+    // train network
+    for (int i = 0; i < 10000; i++) {
+        for (const auto &d: data) {
+            net.train({ d.sepal_l,
+                        d.sepal_w,
+                        d.petal_l,
+                        d.petal_w },
+                      { d.i == Iris::setosa,
+                        d.i == Iris::versicolor,
+                        d.i == Iris::virginica });
+        }
+        std::cout << "trained round " << i << " of 10000\n";
+    }
+    std::cout << "\nNetwork is done:\n" << net << "\nCalculating score:\n";
+    {
+        int correct, wrong, total;
+        for (const auto &d: test_data) {
+            auto results = net.run({ d.sepal_l,
+                                     d.sepal_w,
+                                     d.petal_l,
+                                     d.petal_w });
+            int sum = 0;
+            for (auto x: results) { x = std::round(x); sum += x; }
+            if (sum != 1) { wrong++; continue; } // Bad network! You can't pull a 50/50 on me
+            if (results[static_cast<unsigned>(d.i)]) correct++;
+        }
+        total = correct + wrong;
+        std::cout << "Network got "
+                  << correct
+                  << " out of "
+                  << total
+                  << " for a total score of "
+                  << (double) correct / total
+                  << '\n';
+    }
 }
 
 int main() {
