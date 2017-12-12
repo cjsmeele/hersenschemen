@@ -227,7 +227,7 @@ iris_t make_iris(std::string &raw_iris) {
 }
 
 template<typename S> // Printing beautifull flowers
-S &operator<<(S& s, iris_t t) {
+S &operator<<(S& s, const iris_t &t) {
     s << '[' << t.sepal_l << ' ' << t.sepal_w << ' ' << t.petal_l << ' ' << t.petal_w << ' ';
     switch (t.i) { //lol
         case Iris::setosa:     s << "Iris-setosa";     break;
@@ -249,7 +249,6 @@ void iris_dataset() {
         while (std::getline(rdata, line) && line.size())
             data.push_back(make_iris(line));
     }
-    // std::cout << data;
     // Who needs performance when you can shuffle vectors?
     {
         std::random_device r;
@@ -257,9 +256,11 @@ void iris_dataset() {
         std::shuffle(data.begin(), data.end(), engine); // every day i'm shuffelin'
     }
     // get some validation data
-    for (int _ = 0; _ < 50; _++) { test_data.push_back(data.back()); data.pop_back(); }
+    for (int _ = 0; _ < 100; _++) { test_data.push_back(data.back()); data.pop_back(); }
+    // std::cout << "<<<\n" << test_data << "<<<\n";
+    // std::cout << "<<<\n" << data << "<<<\n";
     // train network
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 1000; i++) {
         for (const auto &d: data) {
             net.train({ d.sepal_l,
                         d.sepal_w,
@@ -280,9 +281,15 @@ void iris_dataset() {
                                      d.petal_l,
                                      d.petal_w });
             int sum = 0;
-            for (auto x: results) { x = std::round(x); sum += x; }
+            for (auto &x : results)
+                x = std::round(x), sum += x;
+
             if (sum != 1) { wrong++; continue; } // Bad network! You can't pull a 50/50 on me
-            if (results[static_cast<unsigned>(d.i)]) correct++;
+
+            if (results[static_cast<unsigned>(d.i)])
+                correct++;
+            else
+                wrong++;
         }
         int total = correct + wrong;
         std::cout << "Network got "
