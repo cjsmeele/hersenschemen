@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.5)
 project(nn)
 
-add_compile_options(-Wall -Wextra -pedantic -g3 -O3)
-set(CMAKE_CXX_STANDARD 14)
+add_compile_options(-Wall -Wextra -pedantic-errors
+                    -g3
+                    -static -static-libgcc -static-libstdc++
+                    -funroll-loops -march=native -mtune=native -Ofast
+                    -std=c++17)
 
 set(SOURCE_FILES main.cc)
 add_executable(nn ${SOURCE_FILES})

@@ -31,6 +31,10 @@
 #include <cmath>
 #include <type_traits>
 
+#ifdef NDEBUG
+#define MATRIX_NDEBUG 1
+#endif
+
 template<typename T, uint rows, uint cols>
 class Matrix {
     static_assert(std::is_arithmetic<T>::value,
@@ -41,21 +45,25 @@ protected:
     T elems[rows][cols] { };
 
 public:
-    const T &operator()(uint row, uint col) const {
+    constexpr const T &operator()(uint row, uint col) const {
+        #ifndef MATRIX_NDEBUG
         if (!row || !col || row > rows || col > cols)
             throw std::logic_error("Matrix index out of bounds");
+        #endif
         return elems[row-1][col-1];
     }
-    T &operator()(uint row, uint col) {
+    constexpr T &operator()(uint row, uint col) {
+        #ifndef MATRIX_NDEBUG
         if (!row || !col || row > rows || col > cols)
             throw std::logic_error("Matrix index out of bounds");
+        #endif
         return elems[row-1][col-1];
     }
 
     /**
      * \brief Negate matrices.
      */
-    Matrix<T, rows, cols> operator-() const {
+    constexpr Matrix<T, rows, cols> operator-() const {
         Matrix<T, rows, cols> c;
 
         for (uint row = 1; row <= rows; row++) {
@@ -69,7 +77,7 @@ public:
     /**
      * \brief Transpose matrices.
      */
-    Matrix<T, cols, rows> transpose() const {
+    constexpr Matrix<T, cols, rows> transpose() const {
         Matrix<T, cols, rows> c;
 
         for (uint row = 1; row <= rows; row++) {
@@ -83,7 +91,7 @@ public:
     /**
      * \brief Multiply a matrix with a scalar.
      */
-    Matrix<T, rows, cols> operator*(T n) const {
+    constexpr Matrix<T, rows, cols> operator*(T n) const {
         Matrix<T, rows, cols> c;
 
         for (uint row = 1; row <= rows; row++) {
@@ -109,7 +117,7 @@ public:
     /**
      * \brief Add matrices.
      */
-    Matrix<T, rows, cols> operator+(Matrix<T, rows, cols> b) const {
+    constexpr Matrix<T, rows, cols> operator+(Matrix<T, rows, cols> b) const {
         Matrix<T, rows, cols> c;
 
         for (uint row = 1; row <= rows; row++) {
@@ -135,7 +143,7 @@ public:
     /**
      * \brief Subtract matrices.
      */
-    Matrix<T, rows, cols> operator-(Matrix<T, rows, cols> b) const {
+    constexpr Matrix<T, rows, cols> operator-(Matrix<T, rows, cols> b) const {
         // Perhaps I'm being a bit too lazy.
         return this->operator+(-b);
     }
@@ -151,14 +159,14 @@ public:
      * \brief Multiply matrices with each other.
      */
     template<uint bCols>
-    Matrix<T, rows, bCols> operator*(const Matrix<T, cols, bCols> &b) const {
+    constexpr Matrix<T, rows, bCols> operator*(const Matrix<T, cols, bCols> &b) const {
 
         Matrix<T, rows, bCols> c;
 
         for (uint cRow = 1; cRow <= rows; cRow++) {
             for (uint cCol = 1; cCol <= bCols; cCol++) {
                 T sum = 0;
-                for (uint i = 1; i <= rows; i++)
+                for (uint i = 1; i <= cols; i++)
                     sum += this->operator()(cRow, i) * b(i, cCol);
                 c(cRow, cCol) = sum;
             }
@@ -180,21 +188,48 @@ public:
         return *this;
     }
 
-    double det() {
+    constexpr double det() {
         // TODO.
         return 0;
     }
 
-    Matrix<T, rows, cols> invert() {
+    constexpr Matrix<T, rows, cols> invert() {
         Matrix<T, rows, cols> b;
         // TODO.
         return b;
     }
 
+    template<typename F>
+    constexpr auto map(const F &f) const {
+
+        Matrix<T, rows, cols> b;
+
+        for (uint r = 1; r <= rows; ++r)
+            for (uint c = 1; c <= cols; ++c)
+                b(r,c) = f(this->operator()(r, c));
+
+        return b;
+    }
+
+    template<typename F>
+    constexpr auto &mip(const F &f) {
+        // Map In Place.
+
+        for (uint r = 1; r <= rows; ++r) {
+            for (uint c = 1; c <= cols; ++c) {
+                auto &x = this->operator()(r, c);
+                x = f(x);
+            }
+        }
+
+        return *this;
+    }
+
+
     /**
      * \brief Get an identity matrix.
      */
-    static Matrix<T, rows, cols> identity() {
+    constexpr static Matrix<T, rows, cols> identity() {
         static_assert(rows == cols, "Cannot create identity for non-square matrix");
         Matrix<T, rows, cols> id = { };
         for (uint i = 1; i <= rows; i++)
@@ -203,11 +238,13 @@ public:
         return id;
     }
 
-    Matrix() = default;
+    constexpr Matrix() = default;
 
-    Matrix(std::initializer_list<T> il) {
+    constexpr Matrix(std::initializer_list<T> il) {
+        #ifndef MATRIX_NDEBUG
         if (il.size() != rows * cols)
             throw std::logic_error("Matrix initializer Dim mismatch");
+        #endif
 
         uint row = 1;
         uint col = 1;
@@ -231,6 +268,14 @@ public:
 
     virtual ~Matrix() = default;
 };
+
+template<uint rows, uint cols>
+using Matrixf = Matrix<float, rows, cols>;
+
+template<uint rows, uint cols>
+using Matrixd = Matrix<double, rows, cols>;
+
+#ifdef MATRIX_WANT_STREAMOPS
 
 #include <ostream>
 
@@ -266,3 +311,5 @@ std::ostream &operator<<(std::ostream &stream, const Matrix<T, rows, cols> &m) {
 
     return stream;
 }
+
+#endif /* MATRIX_WANT_STREAMOPS */
