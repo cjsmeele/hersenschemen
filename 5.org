@@ -1,0 +1,89 @@
+#+TITLE: Opdrachten 5.1
+#+AUTHOR: Chris Smeele & Jan Halsema
+
+* 5.1
+
+- a
+
+\[ \vec{u} + \vec{v} = \begin{bmatrix} -4 \\ 10 \\ -4 \end{bmatrix}\]
+
+- b
+
+\[ \vec{u} - \vec{w} = \begin{bmatrix} -7 \\ 3 \\ 3 \end{bmatrix} \]
+
+- c
+
+\[ 2\vec{v} = \begin{bmatrix} 0 \\ 18 \\ -12 \end{bmatrix}\]
+
+- d
+
+\[ 3\vec{u} - 2\vec{v} + \vec{w} = \begin{bmatrix} -9 \\ -17 \\ 17 \end{bmatrix} \]
+
+- e
+
+\[ \vec{x} + \vec{y} - \vec{y} = \begin{bmatrix} 1 \\ 5 \end{bmatrix}\]
+
+- f
+
+\[ 2\vec{x} + \vec{u} = \sqrt{-1} \]
+
+* 5.2
+
+- a
+
+\[ \langle \vec{u} | \vec{v} \rangle = -4 \cdot 0 + 1 \cdot 9 + 2 \cdot -6 = -3 \]
+
+- b
+
+\[ \langle \vec{v} | \vec{u} \rangle = 0 \cdot -4 + 9 \cdot 1 + -6 \cdot 2 = -3 \]
+
+- c
+
+Dimensies van $\vec{w}$ en $\vec{x}$ komen niet overeen.
+
+\[ \langle \vec{w} | \vec{x} \rangle = \sqrt{-1} \]
+
+- d
+
+\[ \langle \vec{u} | \vec{v} \rangle \vec{w} = \left( -4 \cdot 0 + 1 \cdot 9 + 2 \cdot -6 \right) \vec{w} = -3 \vec{w} = \begin{bmatrix} -9 \\ 6 \\ 3 \end{bmatrix} \]
+
+- e
+
+\[ \langle \langle \vec{u} | \vec{v} \rangle \vec{w} | \vec{w} \rangle = \left< \begin{bmatrix} -9 \\ 6 \\ 3 \end{bmatrix} \Bigg\vert \vec{w} \right> = -9 \cdot 3 + 6 \cdot -2 + 3 \cdot -1 = -42 \]
+
+- f
+
+\[ \langle \langle \vec{x} | \vec{y} \rangle \vec{w} | \vec{w} \rangle = \langle (1 \cdot 0 + 5 \cdot -8) \vec{w} | \vec{w} \rangle = \langle -40 \vec{w} | \vec{w} \rangle = \left< \begin{bmatrix} -120 \\ 80 \\ 40 \end{bmatrix} \Bigg\vert \vec{w} \right> = (120 \cdot 3 + 80 \cdot -2 + 40 \cdot -1) = 160 \]
+
+- g
+
+Dimensies van $\langle \langle \vec{x} | \vec{y} \rangle \vec{x}$ en $\vec{w}$ komen niet overeen.
+
+\[ \langle \langle \vec{x} | \vec{y} \rangle \vec{x} | \vec{w} \rangle = \sqrt{-1} \]
+
+* 5.3
+
+- a
+
+\[ A\vec{u} = \begin{bmatrix} 0 \cdot 3 + \left(-1\right) \cdot 5 \\ 1 \cdot 3 + 0 \cdot 5 \end{bmatrix} = \begin{bmatrix} -5 \\ 3 \end{bmatrix} \]
+
+- b
+
+\[ B\left(A\vec{u}\right) = B \begin{bmatrix} -5 \\ 3 \end{bmatrix} = \begin{bmatrix} 15 \\ 6 \end{bmatrix} \]
+
+- c
+
+\[ (BA)\vec{u} = \begin{bmatrix} 0 & -2 \\ -3 & 0 \end{bmatrix}\vec{u} = \begin{bmatrix} -10 \\ -9 \end{bmatrix} \]
+
+
+- d
+
+\[ \vec{u}^T\vec{v} = 3 \cdot 8 + 5 \cdot 2 = 34 \]
+
+- e
+
+\[ \vec{v}^T\vec{u} = \begin{bmatrix} 8 & 2 \end{bmatrix} \begin{bmatrix} 3 \\ 5 \end{bmatrix} = \begin{bmatrix} 34 \end{bmatrix} \]
+
+- f
+
+\[ \left(A\vec{v} + B\vec{u}\right)\vec{v}^T = \left(\begin{bmatrix} -2 \\ 8 \end{bmatrix} + \begin{bmatrix} -9 \\ 10 \end{bmatrix}\right)\vec{v}^T = \begin{bmatrix} -11 \\ 18 \end{bmatrix} \begin{bmatrix} 8 & 2 \end{bmatrix} = \begin{bmatrix} -88 & -22 \\ 144 & 36 \end{bmatrix} \]
