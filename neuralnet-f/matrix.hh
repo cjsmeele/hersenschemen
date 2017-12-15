@@ -289,6 +289,11 @@ constexpr auto dot(const M1 &a, const M2 &b) {
     return a.dot(b);
 }
 
+template<typename T1, uint rows, uint cols>
+constexpr auto operator*(T1 a, const Matrix<T1,rows,cols> &m) {
+    return m * a;
+}
+
 
 #ifdef MATRIX_WANT_STREAMOPS
 
