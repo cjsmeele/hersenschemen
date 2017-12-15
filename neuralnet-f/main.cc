@@ -49,7 +49,10 @@ int main() {
                                          nullptr);
         std::cout << "🦄: " << name << "\n";
 
-        std::cout << std::get<0>(x) << "\n";
+        std::cout << "a:\n" << std::get<0>(x);
+        std::cout << "y:\n" << y;
+        std::cout << "MSE(  1): " << nn::get_mse(std::get<0>(x)(1), y(1)) << "\n";
+        std::cout << "MSE(all): " << nn::get_mse(std::get<0>(x), y) << "\n";
     }
 
     auto L1 = dot(X,  w0).map(nn::g);

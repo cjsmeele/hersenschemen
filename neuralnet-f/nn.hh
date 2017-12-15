@@ -1,8 +1,8 @@
 #pragma once
 
-#include <tuple>
 #include "common.hh"
 #include "matrix.hh"
+#include <tuple>
 
 namespace nn {
 
@@ -27,7 +27,8 @@ namespace nn {
     //         return A;
     // }
 
-    using std::tuple;
+    template<typename...>
+    struct tuple {};
 
     // The machine spirits are willing.
 
@@ -42,7 +43,7 @@ namespace nn {
     template<typename... LsT>
     struct forward_impl<tuple<LsT...>,tuple<>> {
         constexpr auto operator()(LsT... Ls) {
-            return tuple<LsT...>{ Ls... };
+            return std::tuple<LsT...>{ Ls... };
         }
     };
 
@@ -69,23 +70,62 @@ namespace nn {
         return forward_impl<tuple<>,tuple<WsT...>>{}(A1, Ws...);
     }
 
-// template<typename A1T, typename... WsT>
-// constexpr auto train(A1T A1, WsT... &Ws) {
-// }
+    // template<typename L2DT, typename L1T, typename WT, typename... LWs>
+    // constexpr void backwards_impl(L2DT L2D, L1T L1, WT W, LWs... rest) {
+    //     auto D = dot(L2D, W.T()).map(g_);
+    //     W += eta * dot(L1, L2D);
+    //     if constexpr (sizeof...(LWs))
+    //                      backwards(D, rest...);
+    // }
 
-// template<typename L2DT, typename L1T, typename WT, typename... LWs>
-// constexpr void backwards_impl(L2DT L2D, L1T L1, WT W, LWs... rest) {
-//     auto D = dot(L2D, W.T()).map(g_);
-//     W += eta * dot(L1, L2D);
-//     if constexpr (sizeof...(LWs))
-//         backwards(D, rest...);
-// }
+    // template<typename YT, typename LT1, typename WT, typename... LWs>
+    // constexpr void backwards(YT Y, LT1 L1, WT W, LWs... rest) {
+    //     auto D = (Y - L1).map(g_);
+    //     if constexpr (sizeof...(LWs))
+    //         backwards_impl(D, rest...);
+    // }
 
-// template<typename YT, typename LT1, typename WT, typename... LWs>
-// constexpr void backwards(YT Y, LT1 L1, WT W, LWs... rest) {
-//     auto D = (Y - L1).map(g_);
-//     if constexpr (sizeof...(LWs))
-//         backwards_impl(D, rest...);
-// }
+    template<typename T1, uint rows, uint cols>
+    struct get_mse_impl {
+        using MT = Matrix<T1,rows,cols>;
+        constexpr static double f(const MT &A, const MT &Y) {
+            double sum = 0;
+            for (uint i = 1; i <= MT::nrows; ++i)
+                sum += get_mse_impl<T1,1,MT::ncols>::f(A(i), Y(i));
+            return sum / MT::nrows;
+        }
+    };
+
+    template<typename T1, uint cols>
+    struct get_mse_impl<T1,1,cols> {
+        using MT = Matrix<T1,1,cols>;
+        constexpr static double f(const MT &A, const MT &Y) {
+            double sum = 0;
+            auto SE = (Y - A).map([](auto x) { return x*x; });
+            for (uint c = 1; c <= SE.ncols; ++c)
+                sum += SE(c,1);
+            return sum / (2*A.ncols);
+        }
+    };
+
+    template<typename T1, uint rows, uint cols>
+    constexpr double get_mse(const Matrix<T1,rows,cols> &A, const Matrix<T1,rows,cols> &Y) {
+        return get_mse_impl<T1,rows,cols>::f(A, Y);
+    }
+
+
+
+    // template<typename...>
+    // struct train_impl;
+
+    // template<typename A1T, typename YT, typename... LsT, typename... WsT>
+    // struct train_impl<A1T,YT,tuple<LsT...>,tuple<WsT...>> {
+    //     constexpr auto operator()(LsT... Ls) {
+    //         return tuple<LsT...>{ Ls... };
+    //     }
+    // };
+    // constexpr auto train(A1T A1, YT Y, WsT... &Ws,) {
+    // }
+
 
 }

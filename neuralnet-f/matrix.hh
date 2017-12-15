@@ -45,6 +45,9 @@ protected:
     T1 elems[rows][cols] { };
 
 public:
+    constexpr static uint nrows = rows;
+    constexpr static uint ncols = cols;
+
     constexpr const T1 &operator()(uint row, uint col) const {
         #ifndef MATRIX_NDEBUG
         if (!row || !col || row > rows || col > cols)
@@ -58,6 +61,17 @@ public:
             throw std::logic_error("Matrix index out of bounds");
         #endif
         return elems[row-1][col-1];
+    }
+
+    constexpr Matrix<T1,1,cols> operator()(uint row) const {
+        #ifndef MATRIX_NDEBUG
+        if (!row || row > rows)
+            throw std::logic_error("Matrix index out of bounds");
+        #endif
+        Matrix<T1,1,cols> m;
+        for (uint i = 1; i <= ncols; ++i)
+            m(1,i) = this->operator()(row,i);
+        return m;
     }
 
     /**
