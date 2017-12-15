@@ -266,7 +266,7 @@ public:
         return *this;
     }
 
-    virtual ~Matrix() = default;
+    ~Matrix() = default;
 };
 
 template<uint rows, uint cols>
