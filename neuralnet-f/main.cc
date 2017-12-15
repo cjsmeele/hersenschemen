@@ -9,6 +9,16 @@ using namespace nn;
 
 constexpr auto g = [](auto z)  { return 1 / (1 + exp(-z)); };
 constexpr auto g_ = [](auto z) { return g(z) * (1 - g(z)); };
+//constexpr auto g_ = [](auto z) { return z * (1 - z); };
+
+template<typename LM, typename W, typename... Ws>
+constexpr auto forwards(LM matrix, W weights, Ws... rest) {
+    auto A = dot(matrix, weights).map(g);
+    if constexpr (sizeof...(Ws))
+        return forwards(A, rest...);
+    else
+        return A;
+}
 
 int main() {
     srand(time(NULL));
@@ -37,12 +47,13 @@ int main() {
     constexpr auto eta = 0.1;
 
     for (int _ = 0; _ < 60000; ++_) {
-        auto L1 = dot(X,  w1).map(g); // 4 * 4
-        auto L2 = dot(L1, w2).map(g); // 4 * 1
-        auto L2D = (y - L2) * L2.map(g_);
-        auto L1D = dot(L2D, w2.T()) * L1.map(g_);
-        w2 += eta * dot(L1.T(), L2D);
-        w1 += eta * dot( X.T(), L1D);
+//        auto L1 = dot(X,  w1).map(g); // 4 * 4
+//        auto L2 = dot(L1, w2).map(g); // 4 * 1
+//        auto L2D = (y - L2) * L2.map(g_);
+//        auto L1D = dot(L2D, w2.T()) * L1.map(g_);
+//        w2 += eta * dot(L1.T(), L2D);
+//        w1 += eta * dot( X.T(), L1D);
+        forwards(X, w1, w2);
     }
 
     auto L1 = dot(X,  w1).map(g);
