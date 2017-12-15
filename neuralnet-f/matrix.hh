@@ -35,24 +35,24 @@
 #define MATRIX_NDEBUG 1
 #endif
 
-template<typename T, uint rows, uint cols>
+template<typename T1, uint rows, uint cols>
 class Matrix {
-    static_assert(std::is_arithmetic<T>::value,
+    static_assert(std::is_arithmetic<T1>::value,
                   "Matrix type must be arithmetic");
     static_assert(rows >= 1 && cols >= 1,
                   "A Matrix must have a positive non-zero amount of rows and columns");
 protected:
-    T elems[rows][cols] { };
+    T1 elems[rows][cols] { };
 
 public:
-    constexpr const T &operator()(uint row, uint col) const {
+    constexpr const T1 &operator()(uint row, uint col) const {
         #ifndef MATRIX_NDEBUG
         if (!row || !col || row > rows || col > cols)
             throw std::logic_error("Matrix index out of bounds");
         #endif
         return elems[row-1][col-1];
     }
-    constexpr T &operator()(uint row, uint col) {
+    constexpr T1 &operator()(uint row, uint col) {
         #ifndef MATRIX_NDEBUG
         if (!row || !col || row > rows || col > cols)
             throw std::logic_error("Matrix index out of bounds");
@@ -63,8 +63,8 @@ public:
     /**
      * \brief Negate matrices.
      */
-    constexpr Matrix<T, rows, cols> operator-() const {
-        Matrix<T, rows, cols> c;
+    constexpr Matrix<T1, rows, cols> operator-() const {
+        Matrix<T1, rows, cols> c;
 
         for (uint row = 1; row <= rows; row++) {
             for (uint col = 1; col <= cols; col++)
@@ -77,8 +77,8 @@ public:
     /**
      * \brief Transpose matrices.
      */
-    constexpr Matrix<T, cols, rows> transpose() const {
-        Matrix<T, cols, rows> c;
+    constexpr Matrix<T1, cols, rows> T() const {
+        Matrix<T1, cols, rows> c;
 
         for (uint row = 1; row <= rows; row++) {
             for (uint col = 1; col <= cols; col++)
@@ -91,8 +91,8 @@ public:
     /**
      * \brief Multiply a matrix with a scalar.
      */
-    constexpr Matrix<T, rows, cols> operator*(T n) const {
-        Matrix<T, rows, cols> c;
+    constexpr Matrix<T1, rows, cols> operator*(T1 n) const {
+        Matrix<T1, rows, cols> c;
 
         for (uint row = 1; row <= rows; row++) {
             for (uint col = 1; col <= cols; col++) {
@@ -105,7 +105,7 @@ public:
     /**
      * \brief Multiply a matrix with a scalar. Assign the result.
      */
-    Matrix<T, rows, cols> &operator*=(T n) {
+    Matrix<T1, rows, cols> &operator*=(T1 n) {
         for (uint row = 1; row <= rows; row++) {
             for (uint col = 1; col <= cols; col++)
                 this->operator()(row, col) *= n;
@@ -117,8 +117,8 @@ public:
     /**
      * \brief Add matrices.
      */
-    constexpr Matrix<T, rows, cols> operator+(Matrix<T, rows, cols> b) const {
-        Matrix<T, rows, cols> c;
+    constexpr Matrix<T1, rows, cols> operator+(Matrix<T1, rows, cols> b) const {
+        Matrix<T1, rows, cols> c;
 
         for (uint row = 1; row <= rows; row++) {
             for (uint col = 1; col <= cols; col++)
@@ -131,7 +131,7 @@ public:
     /**
      * \brief Add matrices. Assign the result
      */
-    Matrix<T, rows, cols> &operator+=(Matrix<T, rows, cols> b) {
+    Matrix<T1, rows, cols> &operator+=(Matrix<T1, rows, cols> b) {
         for (uint row = 1; row <= rows; row++) {
             for (uint col = 1; col <= cols; col++)
                 this->operator()(row, col) += b(row, col);
@@ -143,7 +143,7 @@ public:
     /**
      * \brief Subtract matrices.
      */
-    constexpr Matrix<T, rows, cols> operator-(Matrix<T, rows, cols> b) const {
+    constexpr Matrix<T1, rows, cols> operator-(Matrix<T1, rows, cols> b) const {
         // Perhaps I'm being a bit too lazy.
         return this->operator+(-b);
     }
@@ -151,7 +151,7 @@ public:
     /**
      * \brief Subtract matrices. Assign the result.
      */
-    Matrix<T, rows, cols> &operator-=(Matrix<T, rows, cols> b) {
+    Matrix<T1, rows, cols> &operator-=(Matrix<T1, rows, cols> b) {
         return this->operator+=(-b);
     }
 
@@ -159,13 +159,13 @@ public:
      * \brief Dot product.
      */
     template<uint bCols>
-    constexpr Matrix<T, rows, bCols> dot(const Matrix<T, cols, bCols> &b) const {
+    constexpr Matrix<T1, rows, bCols> dot(const Matrix<T1, cols, bCols> &b) const {
 
-        Matrix<T, rows, bCols> c;
+        Matrix<T1, rows, bCols> c;
 
         for (uint cRow = 1; cRow <= rows; cRow++) {
             for (uint cCol = 1; cCol <= bCols; cCol++) {
-                T sum = 0;
+                T1 sum = 0;
                 for (uint i = 1; i <= cols; i++)
                     sum += this->operator()(cRow, i) * b(i, cCol);
                 c(cRow, cCol) = sum;
@@ -178,8 +178,8 @@ public:
     /**
      * \brief Multiply matrices with each other.
      */
-    constexpr Matrix<T, rows, cols> operator*(const Matrix<T, rows, cols> &b) const {
-        Matrix<T, rows, cols> m;
+    constexpr Matrix<T1, rows, cols> operator*(const Matrix<T1, rows, cols> &b) const {
+        Matrix<T1, rows, cols> m;
         for (uint r = 1; r <= rows; ++r)
             for (uint c = 1; c <= cols; ++c)
                 m(r,c) = (*this)(r,c) * b(r,c);
@@ -191,8 +191,8 @@ public:
      *
      * This is only valid for square matrices.
      */
-    //typename std::enable_if<(rows==cols),Matrix<T,rows,rows>>::type *
-    Matrix<T,rows,cols> &operator*=(const Matrix<T,cols,rows> &b) {
+    //typename std::enable_if<(rows==cols),Matrix<T1,rows,rows>>::type *
+    Matrix<T1,rows,cols> &operator*=(const Matrix<T1,cols,rows> &b) {
         static_assert(rows == cols, "Cannot assign non-square matrix multiplication result");
         *this = this->operator*(b);
         return *this;
@@ -203,8 +203,8 @@ public:
         return 0;
     }
 
-    constexpr Matrix<T, rows, cols> invert() {
-        Matrix<T, rows, cols> b;
+    constexpr Matrix<T1, rows, cols> invert() {
+        Matrix<T1, rows, cols> b;
         // TODO.
         return b;
     }
@@ -212,7 +212,7 @@ public:
     template<typename F>
     constexpr auto map(const F &f) const {
 
-        Matrix<T, rows, cols> b;
+        Matrix<T1, rows, cols> b;
 
         for (uint r = 1; r <= rows; ++r)
             for (uint c = 1; c <= cols; ++c)
@@ -235,13 +235,12 @@ public:
         return *this;
     }
 
-
     /**
      * \brief Get an identity matrix.
      */
-    constexpr static Matrix<T, rows, cols> identity() {
+    constexpr static Matrix<T1, rows, cols> identity() {
         static_assert(rows == cols, "Cannot create identity for non-square matrix");
-        Matrix<T, rows, cols> id = { };
+        Matrix<T1, rows, cols> id = { };
         for (uint i = 1; i <= rows; i++)
             id(i, i) = 1;
 
@@ -250,7 +249,7 @@ public:
 
     constexpr Matrix() = default;
 
-    constexpr Matrix(std::initializer_list<T> il) {
+    constexpr Matrix(std::initializer_list<T1> il) {
         #ifndef MATRIX_NDEBUG
         if (il.size() != rows * cols)
             throw std::logic_error("Matrix initializer Dim mismatch");
@@ -259,7 +258,7 @@ public:
         uint row = 1;
         uint col = 1;
 
-        for (T x : il) {
+        for (T1 x : il) {
             this->operator()(row, col++) = x;
             if (col > cols) {
                 row++;
@@ -268,7 +267,7 @@ public:
         }
     }
 
-    Matrix<T, rows, cols> &operator=(const Matrix<T, rows, cols> &b) {
+    Matrix<T1, rows, cols> &operator=(const Matrix<T1, rows, cols> &b) {
         for (uint row = 1; row <= rows; row++) {
             for (uint col = 1; col <= cols; col++)
                 this->operator()(row, col) = b(row, col);
@@ -298,8 +297,8 @@ constexpr auto dot(const M1 &a, const M2 &b) {
 /**
  * Dump a matrix to an output stream.
  */
-template<typename T, uint rows, uint cols>
-std::ostream &operator<<(std::ostream &stream, const Matrix<T, rows, cols> &m) {
+template<typename T1, uint rows, uint cols>
+std::ostream &operator<<(std::ostream &stream, const Matrix<T1, rows, cols> &m) {
     char buffer[32];
 
     for (uint row = 1; row <= rows; row++) {
@@ -309,7 +308,7 @@ std::ostream &operator<<(std::ostream &stream, const Matrix<T, rows, cols> &m) {
             stream << "[[ ";
 
         for (uint col = 1; col <= cols; col++) {
-            if (std::is_floating_point<T>::value)
+            if (std::is_floating_point<T1>::value)
                 snprintf(buffer, 32, "%4.1lf", (double)m(row, col));
             else
                 snprintf(buffer, 32, "%2ld", (intmax_t)m(row, col));
