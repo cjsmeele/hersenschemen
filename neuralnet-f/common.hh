@@ -1,22 +1,9 @@
 #pragma once
 
-#define NDEBUG
-#define MATRIX_WANT_STREAMOPS
+#define NDEBUG 1
+#define MATRIX_WANT_STREAMOPS 1
 
-#include <vector>
 #include <cstdint>
-
-template<typename S, typename T>
-S &operator<<(S& s, const std::vector<T> &v) {
-    s << "[";
-    for (const auto &vv : v) {
-        s << ' ';
-        s << vv;
-    }
-    s << " ]";
-    return s;
-}
-
 #include <cmath>
 
 // Uncomment to round all floats before printing.
