@@ -37,37 +37,40 @@ namespace nn {
         return dot(A,W).map(g);
     }
 
-    template<typename...>
-    struct forward_impl;
+    namespace detail {
 
-    template<typename... LsT>
-    struct forward_impl<tuple<LsT...>,tuple<>> {
-        constexpr auto operator()(LsT... Ls) {
-            return std::tuple<LsT...>{ Ls... };
-        }
-    };
+        template<typename...>
+        struct forward;
 
-    template<typename... LsT, typename W1T, typename... WsT>
-    struct forward_impl<tuple<LsT...>,tuple<W1T,WsT...>> {
-        template<typename A1T>
-        constexpr auto operator()(A1T A1, W1T W1, WsT... Ws, LsT... Ls) {
-
-            auto A = forward_one(A1,W1);
-            if constexpr (sizeof...(WsT)) {
-                return forward_impl<tuple<A1T,LsT...>,
-                                    tuple<WsT...>>{}
-                (A, Ws..., A1, Ls...);
-            } else {
-                return forward_impl<tuple<decltype(A),A1T,LsT...>,
-                                    tuple<>>{}
-                (A, A1, Ls...);
+        template<typename... LsT>
+        struct forward<tuple<LsT...>,tuple<>> {
+            constexpr static auto f(LsT... Ls) {
+                return std::tuple<LsT...>{ Ls... };
             }
-        }
-    };
+        };
+
+        template<typename... LsT, typename W1T, typename... WsT>
+        struct forward<tuple<LsT...>,tuple<W1T,WsT...>> {
+            template<typename A1T>
+            constexpr static auto f(A1T A1, W1T W1, WsT... Ws, LsT... Ls) {
+
+                auto A = forward_one(A1,W1);
+                if constexpr (sizeof...(WsT)) {
+                    return forward<tuple<A1T,LsT...>,
+                                            tuple<WsT...>>
+                           ::f(A, Ws..., A1, Ls...);
+                } else {
+                    return forward<tuple<decltype(A),A1T,LsT...>,
+                                        tuple<>>
+                           ::f(A, A1, Ls...);
+                }
+            }
+        };
+    }
 
     template<typename A1T, typename... WsT>
     constexpr auto forward(A1T A1, WsT... Ws) {
-        return forward_impl<tuple<>,tuple<WsT...>>{}(A1, Ws...);
+        return detail::forward<tuple<>,tuple<WsT...>>::f(A1, Ws...);
     }
 
     // template<typename L2DT, typename L1T, typename WT, typename... LWs>
@@ -85,32 +88,35 @@ namespace nn {
     //         backwards_impl(D, rest...);
     // }
 
-    template<typename T1, uint rows, uint cols>
-    struct get_mse_impl {
-        using MT = Matrix<T1,rows,cols>;
-        constexpr static double f(const MT &A, const MT &Y) {
-            double sum = 0;
-            for (uint i = 1; i <= MT::nrows; ++i)
-                sum += get_mse_impl<T1,1,MT::ncols>::f(A(i), Y(i));
-            return sum / MT::nrows;
-        }
-    };
+    namespace detail {
 
-    template<typename T1, uint cols>
-    struct get_mse_impl<T1,1,cols> {
-        using MT = Matrix<T1,1,cols>;
-        constexpr static double f(const MT &A, const MT &Y) {
-            double sum = 0;
-            auto SE = (Y - A).map([](auto x) { return x*x; });
-            for (uint c = 1; c <= SE.ncols; ++c)
-                sum += SE(c,1);
-            return sum / (2*A.ncols);
-        }
-    };
+        template<typename T1, uint rows, uint cols>
+        struct get_mse {
+            using MT = Matrix<T1,rows,cols>;
+            constexpr static double f(const MT &A, const MT &Y) {
+                double sum = 0;
+                for (uint i = 1; i <= MT::nrows; ++i)
+                    sum += get_mse<T1,1,MT::ncols>::f(A(i), Y(i));
+                return sum / MT::nrows;
+            }
+        };
+
+        template<typename T1, uint cols>
+        struct get_mse<T1,1,cols> {
+            using MT = Matrix<T1,1,cols>;
+            constexpr static double f(const MT &A, const MT &Y) {
+                double sum = 0;
+                auto SE = (Y - A).map([](auto x) { return x*x; });
+                for (uint c = 1; c <= SE.ncols; ++c)
+                    sum += SE(c,1);
+                return sum / (2*A.ncols);
+            }
+        };
+    }
 
     template<typename T1, uint rows, uint cols>
     constexpr double get_mse(const Matrix<T1,rows,cols> &A, const Matrix<T1,rows,cols> &Y) {
-        return get_mse_impl<T1,rows,cols>::f(A, Y);
+        return detail::get_mse<T1,rows,cols>::f(A, Y);
     }
 
 
