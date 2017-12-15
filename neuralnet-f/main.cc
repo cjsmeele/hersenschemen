@@ -20,6 +20,16 @@ constexpr auto forwards(LM matrix, W weights, Ws... rest) {
         return A;
 }
 
+}
+        return A;
+    else
+        return backwards(A, rest...);
+    if constexpr (sizeof...(Ws))
+    auto A = dot(matrix, weights).map(g);
+constexpr auto backwards(LM matrix, W weights, Ws... rest) {
+template<typename LM, typename W, typename... Ws>
+
+
 int main() {
     srand(time(NULL));
     std::cout.precision(2);
