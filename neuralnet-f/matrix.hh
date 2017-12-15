@@ -156,10 +156,10 @@ public:
     }
 
     /**
-     * \brief Multiply matrices with each other.
+     * \brief Dot product.
      */
     template<uint bCols>
-    constexpr Matrix<T, rows, bCols> operator*(const Matrix<T, cols, bCols> &b) const {
+    constexpr Matrix<T, rows, bCols> dot(const Matrix<T, cols, bCols> &b) const {
 
         Matrix<T, rows, bCols> c;
 
@@ -176,6 +176,17 @@ public:
     }
 
     /**
+     * \brief Multiply matrices with each other.
+     */
+    constexpr Matrix<T, rows, cols> operator*(const Matrix<T, rows, cols> &b) const {
+        Matrix<T, rows, cols> m;
+        for (uint r = 1; r <= rows; ++r)
+            for (uint c = 1; c <= cols; ++c)
+                m(r,c) = (*this)(r,c) * b(r,c);
+        return m;
+    }
+
+    /**
      * \brief Multiply matrices with each other. Assign the result.
      *
      * This is only valid for square matrices.
@@ -183,8 +194,7 @@ public:
     //typename std::enable_if<(rows==cols),Matrix<T,rows,rows>>::type *
     Matrix<T,rows,cols> &operator*=(const Matrix<T,cols,rows> &b) {
         static_assert(rows == cols, "Cannot assign non-square matrix multiplication result");
-        auto c = this->operator*(b);
-        *this = c;
+        *this = this->operator*(b);
         return *this;
     }
 
@@ -274,6 +284,12 @@ using Matrixf = Matrix<float, rows, cols>;
 
 template<uint rows, uint cols>
 using Matrixd = Matrix<double, rows, cols>;
+
+template<typename M1, typename M2>
+constexpr auto dot(const M1 &a, const M2 &b) {
+    return a.dot(b);
+}
+
 
 #ifdef MATRIX_WANT_STREAMOPS
 
