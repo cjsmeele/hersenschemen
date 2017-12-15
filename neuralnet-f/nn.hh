@@ -7,7 +7,7 @@
 namespace nn {
 
     constexpr auto sigma  = [](auto ws) { return 1 / (1 + exp(-ws)); };
-    constexpr auto sigma_ = [](auto a)  { return a * (1 - a);       };
+    constexpr auto sigma_ = [](auto a)  { return a * (1 - a);        };
     // constexpr auto sigma_ = [](auto a)  { return sigma(a) * (1 - sigma(a)); };
 
     constexpr auto g  = sigma;
@@ -46,32 +46,27 @@ namespace nn {
         }
     };
 
-    template<typename... LsT, typename W1T, typename A1T>
-    struct forward_impl<tuple<LsT...>,tuple<W1T>,A1T> {
-        constexpr auto operator()(A1T A1, W1T W1, LsT... Ls) {
+    template<typename... LsT, typename W1T, typename... WsT>
+    struct forward_impl<tuple<LsT...>,tuple<W1T,WsT...>> {
+        template<typename A1T>
+        constexpr auto operator()(A1T A1, W1T W1, WsT... Ws, LsT... Ls) {
 
             auto A = forward_one(A1,W1);
-            return forward_impl<tuple<decltype(A),A1T,LsT...>,
-                                tuple<>>{}
-            (A, A1, Ls...);
-        }
-    };
-
-    template<typename... LsT, typename W1T, typename W2T, typename... WsT, typename A1T>
-    struct forward_impl<tuple<LsT...>,tuple<W1T,W2T,WsT...>,A1T> {
-        constexpr auto operator()(A1T A1, W1T W1, W2T W2, WsT... Ws, LsT... Ls) {
-
-            auto A = forward_one(A1,W1);
-            return forward_impl<tuple<A1T,LsT...>,
-                                tuple<W2T,WsT...>,
-                                decltype(A)>{}
-            (A, W2, Ws..., A1, Ls...);
+            if constexpr (sizeof...(WsT)) {
+                return forward_impl<tuple<A1T,LsT...>,
+                                    tuple<WsT...>>{}
+                (A, Ws..., A1, Ls...);
+            } else {
+                return forward_impl<tuple<decltype(A),A1T,LsT...>,
+                                    tuple<>>{}
+                (A, A1, Ls...);
+            }
         }
     };
 
     template<typename A1T, typename... WsT>
     constexpr auto forward(A1T A1, WsT... Ws) {
-        return forward_impl<tuple<>,tuple<WsT...>,A1T>{}(A1, Ws...);
+        return forward_impl<tuple<>,tuple<WsT...>>{}(A1, Ws...);
     }
 
 // template<typename A1T, typename... WsT>
