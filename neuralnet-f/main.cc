@@ -31,8 +31,7 @@ int main() {
     Matrixd<4,1> w1 {};
     w1.mip(rd);
 
-    // for (int _ = 0; _ < 60000; ++_) {
-    for (int _ = 0; _ < 3; ++_) {
+    for (int _ = 0; _ < 10000; ++_) {
         // auto L1 = dot(X,  w0).map(g); // 4 * 4
         // auto L2 = dot(L1, w1).map(g); // 4 * 1
         // auto L2D = (y - L2) * L2.map(g_);
@@ -42,23 +41,34 @@ int main() {
 
         // backwards(y, forwards(X, w0, w1), L1, w1, L0, w0);
         // auto x = nn::forward(X, w0, w1);
-        auto x = nn::train(X, y, w0, w1);
+        //auto x = nn::train(X, y, w0, w1);
+        nn::train(X, y, w0, w1);
+        //auto A = nn::forwards(X, w0, w1);
+        //std::cout << "a:\n" << A;
+        //std::cout << "y:\n" << y;
+        //std::cout << "MSE(  1): " << nn::get_mse(A(1), y(1)) << "\n";
+        //std::cout << "MSE(all): " << nn::get_mse(A, y) << "\n";
 
-        char *name = abi::__cxa_demangle(typeid(x).name(),
-                                         nullptr,
-                                         nullptr,
-                                         nullptr);
-        std::cout << "🦄: " << name << "\n";
+        //char *name = abi::__cxa_demangle(typeid(x).name(),
+        //                                 nullptr,
+        //                                 nullptr,
+        //                                 nullptr);
+        //std::cout << "🦄: " << name << "\n";
 
-        std::cout << "a:\n" << std::get<0>(x);
-        std::cout << "y:\n" << y;
-        std::cout << "MSE(  1): " << nn::get_mse(std::get<0>(x)(1), y(1)) << "\n";
-        std::cout << "MSE(all): " << nn::get_mse(std::get<0>(x), y) << "\n";
+        //std::cout << "a:\n" << std::get<0>(x);
+        //std::cout << "y:\n" << y;
+        //std::cout << "MSE(  1): " << nn::get_mse(std::get<0>(x)(1), y(1)) << "\n";
+        //std::cout << "MSE(all): " << nn::get_mse(std::get<0>(x), y) << "\n";
     }
 
-    auto L1 = dot(X,  w0).map(nn::g);
-    auto L2 = dot(L1, w1).map(nn::g);
-    std::cout << L2;
+    auto A = nn::forwards(X, w0, w1);
+    std::cout << A;
+    std::cout << "MSE(all): " << nn::get_mse(A, y) << "\n";
+
+
+    //auto L1 = dot(X,  w0).map(nn::g);
+    //auto L2 = dot(L1, w1).map(nn::g);
+    //std::cout << L2;
 
     #ifdef NDEBUG
     std::cout << "NDEBUG\n";

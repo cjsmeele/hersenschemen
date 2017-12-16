@@ -7,8 +7,8 @@
 namespace nn {
 
     constexpr auto sigma  = [](auto ws) { return 1 / (1 + exp(-ws)); };
+    // Input for sigma' is an activation value (the sigma of the weighted sum of inputs).
     constexpr auto sigma_ = [](auto a)  { return a * (1 - a);        };
-    // constexpr auto sigma_ = [](auto a)  { return sigma(a) * (1 - sigma(a)); };
 
     constexpr auto g  = sigma;
     constexpr auto g_ = sigma_;
@@ -21,8 +21,8 @@ namespace nn {
     // The machine spirits are willing.
 
     template<typename AT, typename WT, typename F = decltype(g)>
-    constexpr auto forward_one(const AT &A, const WT &W, F g = g) {
-        return dot(A,W).map(g);
+    constexpr auto forward_one(const AT &A, const WT &W, F f = g) {
+        return dot(A,W).map(f);
     }
 
     /* Cheap forward that doesn't keep track of activations,
@@ -31,93 +31,36 @@ namespace nn {
     template<typename A1T, typename WT, typename... WsT>
     constexpr auto forwards(const A1T &A1, const WT &W, const WsT&... Ws) {
         auto A = forward_one(A1,W);
-        if constexpr (sizeof...(WsT))
+        if constexpr (sizeof...(WsT) > 0)
             return forwards(A, Ws...);
         else
             return A;
     }
-
-    // namespace detail {
-
-    //     template<typename...>
-    //     struct forward;
-
-    //     template<typename... LsT>
-    //     struct forward<list<LsT...>,list<>> {
-    //         constexpr static auto f(LsT... Ls) {
-    //             return std::tuple { Ls... };
-    //         }
-    //     };
-
-    //     template<typename... LsT, typename W1T, typename... WsT>
-    //     struct forward<list<LsT...>,list<W1T,WsT...>> {
-    //         template<typename A1T>
-    //         constexpr static auto f(const A1T &A1,
-    //                                 W1T &W1,
-    //                                 WsT&... Ws,
-    //                                 LsT... Ls) {
-
-    //             auto A = forward_one(A1,W1);
-    //             if constexpr (sizeof...(WsT)) {
-    //                 return forward<list<A1T,LsT...>,
-    //                                list<WsT...>>
-    //                        ::f(A, Ws..., A1, Ls...);
-    //             } else {
-    //                 return forward<list<decltype(A),A1T,LsT...>,
-    //                                list<>>
-    //                        ::f(A, A1, Ls...);
-    //             }
-    //         }
-    //     };
-    // }
-
-    // template<typename A1T, typename... WsT>
-    // constexpr auto forward(const A1T &A1, WsT&... Ws) {
-    //     return detail::forward<list<>,list<WsT...>>::f(A1, Ws...);
-    // }
-
 
     namespace detail {
 
         template<typename...>
         struct train_backward;
 
-        template<typename L1T, typename... LsT, typename WT, typename... LWs>
-        struct train_backward<list<L1T,LsT...>,list<WT,LWs...>> {
-            template<typename L2DT, typename L1T, typename WT, typename... LWs>
-            constexpr static auto f(L2DT L2D, L1T L1, LsT... Ls, WT &W WsT&... Ws) {
-                // return std::tuple { Ls... };
-                auto D = dot(L2D, W.T()).map(g_);
-                W += eta * dot(L1, L2D);
-                if constexpr (sizeof...(LWs))
-                                    backwards(D, rest...);
+        template<typename L1T, typename... LsT, typename WT, typename... WsT>
+        struct train_backward<list<L1T,LsT...>,list<WT,WsT...>> {
+            template<typename L2DT>
+            constexpr static auto f(L2DT L2D, L1T L1, LsT... Ls, WT &W, WsT&... Ws) {
+                auto D = dot(L2D, W.T()) * L1.map(g_);
+                W += eta * dot(L1.T(), L2D);
+                if constexpr (sizeof...(WsT) > 0)
+                    train_backward<list<LsT...>,list<WsT...>>
+                        ::f(D, Ls..., Ws...);
             }
         };
 
         template<typename LAT, typename... LsT, typename... WsT, typename YT>
-        struct train_backward<list<LAT,LsT...>,list<WsT...>> {
+        struct train_backward<list<LAT,LsT...>,list<WsT...>,YT> {
             constexpr static auto f(LAT LA, LsT... Ls, WsT&... Ws, const YT &Y) {
-                auto D = (Y - LA).map(g_);
-                if constexpr (sizeof...(LsT))
-                    train_backward<decltype(D),list<LsT...>,list<WsT...>>
-                                  ::f(D, Ls..., Ws...);
-
-                // return std::tuple { Ls..., Ws... };
-
-                // template<typename L2DT, typename L1T, typename WT, typename... LWs>
-                // constexpr void backwards_impl(L2DT L2D, L1T L1, WT W, LWs... rest) {
-                //     auto D = dot(L2D, W.T()).map(g_);
-                //     W += eta * dot(L1, L2D);
-                //     if constexpr (sizeof...(LWs))
-                //                      backwards(D, rest...);
-                // }
-
-                // template<typename YT, typename LT1, typename WT, typename... LWs>
-                // constexpr void backwards(YT Y, LT1 L1, WT W, LWs... rest) {
-                //     auto D = (Y - L1).map(g_);
-                //     if constexpr (sizeof...(LWs))
-                //         backwards_impl(D, rest...);
-                // }
+                auto D = (Y - LA) * LA.map(g_);
+                if constexpr (sizeof...(LsT) > 0)
+                    train_backward<list<LsT...>,list<WsT...>>
+                        ::f(D, Ls..., Ws...);
             }
         };
 
@@ -128,7 +71,7 @@ namespace nn {
         template<typename... LsT,
                  typename... WsCT>
         struct train_forward<list<LsT...>,
-                             list</*MISSCHIEN DOOR LEGE LISTS?*/>,
+                             list<>,
                              list<WsCT...>> {
             template<typename YT>
             constexpr static auto f(LsT... Ls, WsCT&... Ws, const YT &Y) {
@@ -152,7 +95,7 @@ namespace nn {
                                     const YT &Y) {
 
                 auto A = forward_one(A1,W1);
-                if constexpr (sizeof...(WsT)) {
+                if constexpr (sizeof...(WsT) > 0) {
                     return train_forward<list<A1T,LsT...>,
                                          list<WsT...>,
                                          list<W1T,WsCT...>>
@@ -165,11 +108,6 @@ namespace nn {
                 }
             }
         };
-    }
-
-    template<typename AT, typename YT, typename... WsT>
-    constexpr auto train(const AT &A, const YT &Y, WsT&... Ws) {
-        return detail::train_forward<list<>,list<WsT...>,list<>>::f(A, Ws..., Y);
     }
 
     namespace detail {
@@ -203,54 +141,8 @@ namespace nn {
         return detail::get_mse<T1,rows,cols>::f(A, Y);
     }
 
-    // template<typename L2DT, typename L1T, typename WT, typename... LWs>
-    // constexpr void backwards_impl(L2DT L2D, L1T L1, WT W, LWs... rest) {
-    //     auto D = dot(L2D, W.T()).map(g_);
-    //     W += eta * dot(L1, L2D);
-    //     if constexpr (sizeof...(LWs))
-    //                      backwards(D, rest...);
-    // }
-
-    // template<typename YT, typename LT1, typename WT, typename... LWs>
-    // constexpr void backwards(YT Y, LT1 L1, WT W, LWs... rest) {
-    //     auto D = (Y - L1).map(g_);
-    //     if constexpr (sizeof...(LWs))
-    //         backwards_impl(D, rest...);
-    // }
-
-
-
-    // namespace detail {
-    //     template<typename AT, typename YT, typename... LsT, typename... WsT>
-    //     struct backward {
-    //     };
-
-    //     template<typename XT, typename YT, typename... WsT>
-    //     struct train {
-    //         // constexpr static double f(LsT... Ls, WsT... Ws) {
-
-    //         template<typename... LsT>
-    //         struct forward_into_backward {
-    //             constexpr static double f(XT X, YT Y, WsT... Ws) {
-    //             }
-    //         };
-
-    //         constexpr static double f(XT X, YT Y, WsT... Ws) {
-
-    //             auto Ls = nn::forward<forward_into_backward,XT,WsT>(X, w0, w1);
-    //             return 0;
-    //         }
-    //     };
-    // }
-
-
-    // struct train_impl<A1T,YT,list<LsT...>,list<WsT...>> {
-    //     constexpr auto operator()(LsT... Ls) {
-    //         return list<LsT...>{ Ls... };
-    //     }
-    // };
-    // constexpr auto train(A1T A1, YT Y, WsT... &Ws,) {
-    // }
-
-
+    template<typename AT, typename YT, typename... WsT>
+    constexpr auto train(const AT &A, const YT &Y, WsT&... Ws) {
+        return detail::train_forward<list<>,list<WsT...>,list<>>::f(A, Ws..., Y);
+    }
 }
