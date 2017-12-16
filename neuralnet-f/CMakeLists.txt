@@ -3,6 +3,7 @@ project(nn)
 
 add_compile_options(-Wall -Wextra -pedantic-errors
                     -g3
+                    -ftemplate-backtrace-limit=0
                     -static -static-libgcc -static-libstdc++
                     -funroll-loops -march=native -mtune=native -Ofast
                     -std=c++17)

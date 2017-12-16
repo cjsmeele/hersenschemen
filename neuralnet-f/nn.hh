@@ -18,6 +18,22 @@ namespace nn {
     template<typename...>
     struct list {};
 
+    namespace detail {
+        template<template<typename...> typename C, typename Acc, typename X, uint I>
+        struct repeat;
+        template<template<typename...> typename C, typename... Acc, typename X>
+        struct repeat<C,list<Acc...>,X,0> {
+            using type = C<Acc...>;
+        };
+        template<template<typename...> typename C, typename... Acc, typename X, uint I>
+        struct repeat<C,list<Acc...>,X,I> {
+            using type = typename repeat<C,list<X,Acc...>,X,I-1>::type;
+        };
+    }
+
+    template<template<typename...> typename C, typename X, uint I>
+    using repeat = typename detail::repeat<C,list<>,X,I>::type;
+
     // The machine spirits are willing.
 
     template<typename AT, typename WT, typename F = decltype(g)>
@@ -145,4 +161,40 @@ namespace nn {
     constexpr auto train(const AT &A, const YT &Y, WsT&... Ws) {
         return detail::train_forward<list<>,list<WsT...>,list<>>::f(A, Ws..., Y);
     }
+
+    namespace detail2 {
+        template<typename T, uint InCount, uint OutCount>
+        using Layer = Matrix<T, InCount, OutCount>;
+
+        template<typename T, uint I, uint O, uint N>
+        struct netcat {
+            template<typename... HT>
+            struct c {
+                using type = std::tuple<Layer<T,I,N>,
+                                        HT...,
+                                        Layer<T,N,O>>;
+            };
+        };
+
+        template<typename T, uint I, uint O, uint H, uint N>
+        struct make_net {
+            using type = typename repeat<netcat<T,I,O,N>::template c,Layer<T,N,N>,H-1>::type;
+        };
+
+        template<typename T, uint I, uint O, uint N>
+        struct make_net<T,I,O,0,N> {
+            using type = std::tuple<Layer<T,I,O>>;
+        };
+    }
+
+    template<typename T,
+             uint Inputs,
+             uint Outputs,
+             uint HiddenLayers,
+             uint NeuronsPerLayer>
+    using make_net = typename detail2::make_net<T,
+                                                Inputs,
+                                                Outputs,
+                                                HiddenLayers,
+                                                NeuronsPerLayer>::type;
 }

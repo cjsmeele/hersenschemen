@@ -25,6 +25,13 @@ int main() {
             0
     };
 
+    auto aoeu = nn::make_net<double,3,1,0,4>{};
+    char *name = abi::__cxa_demangle(typeid(aoeu).name(),
+                                     nullptr,
+                                     nullptr,
+                                     nullptr);
+    std::cout << "🦄🦄🦄🦄🦄🦄🦄: " << name << "\n";
+
     auto rd = [](auto) {return (double)rand()/RAND_MAX*2 - 1;};
     Matrixd<3,4> w0 {};
     w0.mip(rd);
