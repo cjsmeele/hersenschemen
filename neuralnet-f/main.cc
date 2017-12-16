@@ -32,7 +32,7 @@ int main() {
     w1.mip(rd);
 
     // for (int _ = 0; _ < 60000; ++_) {
-    for (int _ = 0; _ < 1; ++_) {
+    for (int _ = 0; _ < 3; ++_) {
         // auto L1 = dot(X,  w0).map(g); // 4 * 4
         // auto L2 = dot(L1, w1).map(g); // 4 * 1
         // auto L2D = (y - L2) * L2.map(g_);
@@ -41,7 +41,8 @@ int main() {
         // w0 += eta * dot( X.T(), L1D);
 
         // backwards(y, forwards(X, w0, w1), L1, w1, L0, w0);
-        auto x = nn::forward(X, w0, w1);
+        // auto x = nn::forward(X, w0, w1);
+        auto x = nn::train(X, y, w0, w1);
 
         char *name = abi::__cxa_demangle(typeid(x).name(),
                                          nullptr,
