@@ -1,4 +1,24 @@
-#+TITLE: Hersenschimmen
+#+TITLE: Hersenschemen
 #+AUTHOR: Chris Smeele, Jan Halsema
 
-* Dingen
+This is a collection of projects for our AI course for Computer Engineering at
+the HU University of Applied Sciences Utrecht.
+
+** Repository contents
+
+*** K-nn classifier (Scheme) [[knn]]
+
+*** K-means classifier (Scheme) [[kmeans]]
+
+*** OO Neural Net [[neuralnet-oo]]
+
+*** Algebraic (vectorized) Neural Net [[neuralnet-f]]
+
+** License
+
+TBD, do not redistribute.
+
+** Authors
+
+- [[https://github.com/cjsmeele][Chris Smeele]]
+- [[https://github.com/ManDeJan][Jan Halsema]]
