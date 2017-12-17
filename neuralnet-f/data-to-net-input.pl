@@ -46,19 +46,30 @@ sub split_archetypes {
     [@sorted[0..$n-1]], [@sorted[$n..$#sorted]]
 }
 
-my $usage = "usage: $0 training_per_label hidden_layers neurons_per_layer [dataset]\n";
+die "usage: $0 training-samples-per-label hidden-layers neurons-per-layer training-sessions [dataset]\n"
+    unless @ARGV >= 4 and @ARGV <= 5;
 
-my $training_count    = int (shift // die $usage);
-my $hidden_layers     = int (shift // die $usage);
-my $neurons_per_layer = int (shift // die $usage);
+my ($training_samples_per_label,
+    $hidden_layers,
+    $neurons_per_layer,
+    $training_sessions) = map int(shift), 1..4;
 
 # This does the thing.
-my %labels; push @{$labels{$_->[$#$_]}}, [map 0+$_, @$_[0..$#$_-1]] for map [split /,/, fchomp $_], <>;
-
+my %labels; push @{$labels{$_->[$#$_]}}, [map 0+$_, @$_[0..$#$_-1]] for map [split /,/, fchomp $_], grep /\S/, <>;
 my @labels = sort keys %labels;
 
+say STDERR sprintf "Distribution of dataset: (%s)", join("|", map scalar(@{$labels{$_}}), @labels);
+
+{
+    my $smallest_label_size = min(map scalar(@{$labels{$_}}), @labels);
+    die sprintf "error: samples per label too high (%d >= %d)\n",
+                $training_samples_per_label,
+                $smallest_label_size
+        if $training_samples_per_label >= $smallest_label_size;
+}
+
 my %labels_split = map {
-    $_ => [split_archetypes $training_count, @{$labels{$_}} ]
+    $_ => [split_archetypes $training_samples_per_label, @{$labels{$_}} ]
 } @labels;
 
 # Archetypes into training set, rest goes to test set.
@@ -68,6 +79,9 @@ my @Atest     = map @{$labels_split{$_}->[1]}, @labels; # Gebruik Chris Modaal v
 
 my @Ytraining = map((([(0)x$_, 1, (0)x($#labels-$_)]) x @{$labels_split{$labels[$_]}->[0]}), 0..$#labels);
 my @Ytest     = map((([(0)x$_, 1, (0)x($#labels-$_)]) x @{$labels_split{$labels[$_]}->[1]}), 0..$#labels);
+
+say STDERR sprintf "Training set size:       %d", scalar @Atraining;
+say STDERR sprintf "Test set size:           %d", scalar @Atest;
 
 sub matrixify {
     my $name = shift;
@@ -91,7 +105,7 @@ say sprintf "    auto net = nn::make_net<double,%d,%d,%d,%d>{};",
             $hidden_layers,
             $neurons_per_layer;
 
-print <<'EOF';
+print <<EOF;
 
     // Randomize initial weights.
     std::apply([](auto& ...x) {
@@ -101,7 +115,7 @@ print <<'EOF';
                }, net);
 
     // Train net.
-    for (int _ = 0; _ < 10000; ++_)
+    for (int _ = 0; _ < $training_sessions; ++_)
         std::apply([&](auto&...x) { nn::train(Atrain, Ytrain, x...); }, net);
 
     // Run test set.
@@ -123,7 +137,7 @@ print <<'EOF';
         if (!waarom_heeft_cpp_geen_continues_naar_outer_loops)
             ++correct;
     }
-    std::cout << "MSE(all): " << nn::get_mse(A, Ytest) << "\n";
-    std::cout << "Correct:  " << correct << "/" << total << "\n";
+    std::cout << "MSE(all): " << nn::get_mse(A, Ytest) << "\\n";
+    std::cout << "Correct:  " << correct << "/" << total << "\\n";
 }
 EOF
