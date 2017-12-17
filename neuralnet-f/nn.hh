@@ -146,7 +146,7 @@ namespace nn {
                 double sum = 0;
                 auto SE = (Y - A).map([](auto x) { return x*x; });
                 for (uint c = 1; c <= SE.ncols; ++c)
-                    sum += SE(c,1);
+                    sum += SE(1,c);
                 return sum / (2*A.ncols);
             }
         };
