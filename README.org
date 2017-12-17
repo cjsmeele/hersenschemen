@@ -6,13 +6,36 @@ the HU University of Applied Sciences Utrecht.
 
 ** Repository contents
 
-*** K-nn classifier (Scheme) [[knn]]
+*** K-nn classifier (Gauche Scheme) [[knn]]
 
-*** K-means classifier (Scheme) [[kmeans]]
+A data classifier based on the K-nearest-neighbor algorithm.
 
-*** OO Neural Net [[neuralnet-oo]]
+*** K-means classifier (Gauche Scheme) [[kmeans]]
 
-*** Algebraic (vectorized) Neural Net [[neuralnet-f]]
+A data classifier based on the K-means clustering algorithm.
+
+*** OO Neural Net (C++14) [[neuralnet-oo]]
+
+An object-oriented implementation for a cpu-bound neural network.
+
+*** Algebraic (vectorized) Neural Net (C++17) [[neuralnet-f]]
+
+An algebraic implementation for a cpu-bound neural network.
+
+This version makes very heavy use of matrix math, template unicorns
+and constexpr magic to achieve blazingly fast performance... for CPU
+code, anyway.
+
+The structure of the net (encoded as matrices of weights per layer) is
+completely static, requiring a recompile when changes to the net's
+structure are needed. In return, the compiler is able to perform very
+aggressive optimizations, resulting in assembly that is perfect for
+the data you're going to hand it.
+
+Another interesting (dare we say awesome?) side-effect is that, given
+that you use a constexpr-able activation function and manage to get
+compile-time random numbers, you should be able to train the network
+at compile time!
 
 ** License
 
