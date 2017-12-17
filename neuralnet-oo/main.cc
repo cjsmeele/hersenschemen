@@ -1,3 +1,19 @@
+/* neuralnet-oo - Object oriented neural network
+ * Copyright (C) 2017, Chris Smeele and Jan Halsema.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
 #include "common.hh"
 #include "net.hh"
 #include <cstdlib>
@@ -260,7 +276,7 @@ void iris_dataset() {
     // std::cout << "<<<\n" << test_data << "<<<\n";
     // std::cout << "<<<\n" << data << "<<<\n";
     // train network
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 10000; i++) {
         for (const auto &d: data) {
             net.train({ d.sepal_l,
                         d.sepal_w,
