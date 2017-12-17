@@ -39,7 +39,19 @@ at compile time!
 
 ** License
 
-TBD, do not redistribute.
+All code in this repository is, unless explicitly stated otherwise in
+the file itself: Copyright (c) 2017, Chris Smeele and Jan Halsema.
+
+Unless explicitly stated otherwise in the file itself, all code in
+this repository is distributed under the [[https://www.gnu.org/licenses/gpl.txt][GNU General Public License]]
+(GPL) version 3 or higher.
+
+Read the file [[COPYING]] for the full license text.
+
+** Bugs & Questions
+
+If you have any questions or bug reports, please report them on the
+[[https://github.com/cjsmeele/hersenschemen/issues][issues page]] on Github.
 
 ** Authors
 
