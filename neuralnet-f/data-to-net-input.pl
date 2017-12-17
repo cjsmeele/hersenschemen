@@ -95,7 +95,7 @@ say sprintf "    auto net = nn::make_net<double,%d,%d,%d,%d>{};",
 print <<'EOF';
 
     // Randomize initial weights.
-    std::apply([](auto& ...x){
+    std::apply([](auto& ...x) {
                    (x.mip([](auto) {
                        return (double)rand()/RAND_MAX*2 - 1;
                    }) , ...);
