@@ -2,7 +2,6 @@
 
 use 5.12.0;
 use warnings;
-use Data::Dump;
 
 # Functionele kak omdat perl5=oud :( {{{
 
