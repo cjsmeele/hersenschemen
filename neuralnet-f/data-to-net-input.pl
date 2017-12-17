@@ -6,27 +6,27 @@ use Data::Dump;
 
 # Functionele kak omdat perl5=oud :( {{{
 
-    sub reduce(&@) {
-        my ($c, $v, @l) = @_;
-        $v = $c->($v, $_) for @l;
-        $v
-    }
-    sub sum { reduce { (shift) + (shift) } 0, @_ }
+sub reduce(&@) {
+    my ($c, $v, @l) = @_;
+    $v = $c->($v, $_) for @l;
+    $v
+}
+sub sum { reduce { (shift) + (shift) } 0, @_ }
 
-    sub min { reduce { my ($c, $x) = @_;
-                       defined $c ? [$c,$x]->[$c>$x] : $x } undef, @_ }
+sub min { reduce { my ($c, $x) = @_;
+                   defined $c ? [$c,$x]->[$c>$x] : $x } undef, @_ }
 
-    sub max { reduce { my ($c, $x) = @_;
-                       defined $c ? [$c,$x]->[$c<$x] : $x } undef, @_ }
-    sub zip {
-        my @r;
-        for my $i (0..min(map $#$_, @_))
-            { push @r, [map $_[$_]->[$i], 0..$#_] }
-        @r
-    }
+sub max { reduce { my ($c, $x) = @_;
+                   defined $c ? [$c,$x]->[$c<$x] : $x } undef, @_ }
+sub zip {
+    my @r;
+    for my $i (0..min(map $#$_, @_))
+        { push @r, [map $_[$_]->[$i], 0..$#_] }
+    @r
+}
 
 # Mistakes were made.
-    sub fchomp { local $_ = shift; chomp; $_ }
+sub fchomp { local $_ = shift; chomp; $_ }
 
 # }}}
 
