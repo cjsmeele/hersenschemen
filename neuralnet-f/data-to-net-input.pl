@@ -6,27 +6,27 @@ use Data::Dump;
 
 # Functionele kak omdat perl5=oud :( {{{
 
-sub reduce(&@) {
-    my ($c, $v, @l) = @_;
-    $v = $c->($v, $_) for @l;
-    $v
-}
-sub sum { reduce { (shift) + (shift) } 0, @_ }
+    sub reduce(&@) {
+        my ($c, $v, @l) = @_;
+        $v = $c->($v, $_) for @l;
+        $v
+    }
+    sub sum { reduce { (shift) + (shift) } 0, @_ }
 
-sub min { reduce { my ($c, $x) = @_;
-                   defined $c ? [$c,$x]->[$c>$x] : $x } undef, @_ }
+    sub min { reduce { my ($c, $x) = @_;
+                       defined $c ? [$c,$x]->[$c>$x] : $x } undef, @_ }
 
-sub max { reduce { my ($c, $x) = @_;
-                   defined $c ? [$c,$x]->[$c<$x] : $x } undef, @_ }
-sub zip {
-    my @r;
-    for my $i (0..min(map $#$_, @_))
-        { push @r, [map $_[$_]->[$i], 0..$#_] }
-    @r
-}
+    sub max { reduce { my ($c, $x) = @_;
+                       defined $c ? [$c,$x]->[$c<$x] : $x } undef, @_ }
+    sub zip {
+        my @r;
+        for my $i (0..min(map $#$_, @_))
+            { push @r, [map $_[$_]->[$i], 0..$#_] }
+        @r
+    }
 
 # Mistakes were made.
-sub fchomp { local $_ = shift; chomp; $_ }
+    sub fchomp { local $_ = shift; chomp; $_ }
 
 # }}}
 
@@ -47,7 +47,7 @@ sub split_archetypes {
     [@sorted[0..$n-1]], [@sorted[$n..$#sorted]]
 }
 
-my $usage = "usage: $0 training_per_label hidden_layers neurons_per_label [dataset]\n";
+my $usage = "usage: $0 training_per_label hidden_layers neurons_per_layer [dataset]\n";
 
 my $training_count    = int (shift // die $usage);
 my $hidden_layers     = int (shift // die $usage);
