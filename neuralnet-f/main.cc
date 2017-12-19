@@ -23,10 +23,182 @@
 #include <typeinfo>
 #include <cxxabi.h>
 #include <tuple>
+#include <fstream>
+#include <type_traits>
+#include <vector>
+#include <string_view>
+
+template<typename T>
+[[nodiscard]] constexpr T big_little_swap(T v) {
+    static_assert(std::is_integral<T>::value, "T must be of integral type");
+    static_assert(std::is_unsigned<T>::value, "swap is only defined for unsigned types");
+    uint8_t r[sizeof(T)];
+    for (size_t i = 0; i < sizeof(T); ++i)
+        r[i] = ((uint8_t*)&v)[sizeof(T)-i-1];
+    return *(T*)r;
+}
+
+template<typename T>
+bool get_the_thing_from_the_thing(std::istream &is, T &v) {
+    is.read((char*)&v, sizeof(T));
+    return (bool)is;
+}
+
+std::vector<uint8_t> read_mnist_idx1(std::string_view filename) {
+    constexpr auto max_records = 1'000'000;
+    std::ifstream file(std::string(filename), std::ios::binary);
+    if (!file)
+        throw std::runtime_error("Could not open label file");
+    file.seekg(0, std::ios::end);
+    size_t size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    if (size < 8)
+        throw std::runtime_error("short short too short for NN");
+
+    { uint32_t magic;
+      if (!get_the_thing_from_the_thing(file, magic)
+          || magic != big_little_swap(2049U)) {
+
+          throw std::runtime_error("magic number mismatch");
+      } }
+
+    uint32_t record_count;
+    get_the_thing_from_the_thing(file, record_count);
+    record_count = big_little_swap(record_count);
+
+    std::cout << "records: " << record_count << "\n";
+    if (record_count > max_records)
+        throw std::runtime_error("too many records");
+
+    std::vector<uint8_t> result;
+    result.resize(record_count);
+    if (!file.read((char*)result.data(), record_count))
+        throw std::runtime_error("could not read records");
+
+    return result;
+}
+
+constexpr unsigned image_rows = 28;
+constexpr unsigned image_cols = 28;
+
+std::vector<uint8_t> read_mnist_idx3(std::string_view filename) {
+
+    constexpr auto max_records = 1'000'000;
+
+    std::ifstream file(std::string(filename), std::ios::binary);
+    if (!file)
+        throw std::runtime_error("Could not open data file");
+    file.seekg(0, std::ios::end);
+    size_t size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    if (size < 4*4)
+        throw std::runtime_error("short short too short for NN");
+
+    { uint32_t magic;
+      if (!get_the_thing_from_the_thing(file, magic)
+          || magic != big_little_swap(2051U)) {
+
+          throw std::runtime_error("magic number mismatch");
+      } }
+
+    uint32_t record_count; get_the_thing_from_the_thing(file, record_count);
+    record_count = big_little_swap(record_count);
+
+    std::cout << "records: " << record_count << "\n";
+    if (record_count > max_records)
+        throw std::runtime_error("too many records");
+
+    uint32_t rows; get_the_thing_from_the_thing(file, rows);
+    uint32_t cols; get_the_thing_from_the_thing(file, cols);
+    if (rows != big_little_swap(image_rows) || cols != big_little_swap(image_cols))
+        throw std::runtime_error("image dims do not match");
+
+    std::vector<uint8_t> result;
+    result.resize(record_count * image_rows * image_cols);
+    if (!file.read((char*)result.data(), record_count * image_rows * image_cols))
+        throw std::runtime_error("could not read records");
+
+    return result;
+}
+
+void run_mnist() {
+    // Parser yay
+
+    constexpr auto input_layer_size  =  784;
+    constexpr auto output_layer_size =   10;
+    constexpr auto batch_size        =  100;
+    constexpr auto training_rounds   = 1000;
+    constexpr std::string_view filename_train_images = "../../mnist/train-images.idx3-ubyte";
+    constexpr std::string_view filename_train_labels = "../../mnist/train-labels.idx1-ubyte";
+    constexpr std::string_view filename_test_images  = "../../mnist/t10k-images.idx3-ubyte";
+    constexpr std::string_view filename_test_labels  = "../../mnist/t10k-labels.idx1-ubyte";
+    Matrixd<batch_size,  input_layer_size> X_training;
+    Matrixd<batch_size, output_layer_size> Y_training;
+    Matrixd<batch_size,  input_layer_size> X_test;
+    Matrixd<batch_size, output_layer_size> Y_test;
+
+    auto label_buffer = read_mnist_idx1(filename_train_labels);
+    auto data_buffer  = read_mnist_idx3(filename_train_images);
+
+    // This does the thing.
+    auto net = nn::make_net<double,input_layer_size,output_layer_size,2,16>();
+    std::apply([](auto& ...x){(x.mip([](auto) {return (double)rand()/RAND_MAX*2 - 1;}), ...);}, net);
+
+    for (auto i = 0; i < training_rounds; ++i) {
+        std::cout << "round " << i << "/" << training_rounds << "\n";
+        for (int j = 0; j < label_buffer.size() / batch_size / 60; ++j) {
+            X_training *= 0; Y_training *= 0;
+            for (int k = 0; k < batch_size; ++k) {
+                for (int l = 0; l < input_layer_size; ++l)
+                     X_training(k+1, l+1) = (double)data_buffer[j*batch_size + k*input_layer_size + l] / 255;
+                Y_training(k+1, label_buffer[j*batch_size + k]+1) = 1;
+            }
+            std::apply([&](auto&...x) { nn::train(X_training, Y_training, x...); }, net);
+        }
+    }
+
+    label_buffer = read_mnist_idx1(filename_test_labels);
+    data_buffer  = read_mnist_idx3(filename_test_images);
+
+    int correct = 0;
+    int total   = 0;
+
+    for (int j = 0; j < label_buffer.size() / batch_size * 0 + 1; ++j) {
+        X_test *= 0; Y_test *= 0;
+        for (int k = 0; k < batch_size; ++k) {
+            for (int l = 0; l < input_layer_size; ++l)
+                X_test(k+1, l+1) = (double)data_buffer[j*batch_size + k*input_layer_size + l] / 255;
+            Y_test(k+1, label_buffer[j*batch_size + k]+1) = 1;
+        }
+        auto A = std::apply([&](auto&...x) { return nn::forwards(X_test, x...); }, net);
+        std::cout << "A:\n" << A;
+        std::cout << "Y:\n" << Y_test;
+        std::cout << "MSE(all):\n" << nn::get_mse(A, Y_test) << "\n";
+
+        for (uint r = 1; r <= A.nrows; ++r) {
+            ++total;
+            bool waarom_heeft_cpp_geen_continues_naar_outer_loops = false;
+            for (uint c = 1; c <= A.ncols; ++c) {
+                if ((A(r,c) > 0.5) != (Y_test(r,c) > 0.5)) {
+                    waarom_heeft_cpp_geen_continues_naar_outer_loops = true;
+                    break;
+                }
+            }
+            if (!waarom_heeft_cpp_geen_continues_naar_outer_loops)
+                ++correct;
+        }
+    }
+    std::cout << "Correct:  " << correct << "/" << total << "\\n";
+}
 
 int main() {
     srand(time(NULL));
     std::cout.precision(2);
+
+    run_mnist();
+    return 0;
 
     Matrixd<4,3> X {
             0, 0, 1,
