@@ -32,7 +32,7 @@ template<typename T>
 [[nodiscard]] constexpr T big_little_swap(T v) {
     static_assert(std::is_integral<T>::value, "T must be of integral type");
     static_assert(std::is_unsigned<T>::value, "swap is only defined for unsigned types");
-    uint8_t r[sizeof(T)] = {};
+    uint8_t r[sizeof(T)] alignas(T) = {};
     for (size_t i = 0; i < sizeof(T); ++i)
         r[i] = ((uint8_t*)&v)[sizeof(T)-i-1];
     return *(T*)r;
@@ -128,7 +128,7 @@ void print_number(const Matrixd<I, 784>& n) {
     for(int i = 1; i <= I; ++i) {
         for (int y = 1; y <= 28; ++y) {
             for (int j = 1; j <= 28; ++j) {
-                auto p = n(i, y * 28 + j);
+                auto p = n(i, (y-1) * 28 + j);
                 if (p <= 0.2)
                     std::cout << " ";
                 else if (p <= 0.4)
@@ -148,7 +148,7 @@ void print_number(const Matrixd<I, 784>& n) {
 void run_mnist() {
 // Parser yay
 
-   constexpr auto input_layer_size  =   784;
+   constexpr auto input_layer_size  = 28*28;
    constexpr auto output_layer_size =    10;
    constexpr auto batch_size        =    10;
    constexpr auto training_rounds   =    15;
@@ -174,7 +174,7 @@ void run_mnist() {
            X_training *= 0; Y_training *= 0;
            for (int k = 0; k < batch_size; ++k) {
                for (int l = 0; l < input_layer_size; ++l)
-                    X_training(k+1, l+1) = (double)data_buffer[j*batch_size + k*input_layer_size + l] / 255;
+                    X_training(k+1, l+1) = (double)data_buffer[j*batch_size*input_layer_size + k*input_layer_size + l] / 255;
                Y_training(k+1, label_buffer[j*batch_size + k]+1) = 1;
            }
 //           std::cout << "Batch X:";
