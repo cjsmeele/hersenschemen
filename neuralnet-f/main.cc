@@ -150,8 +150,8 @@ void run_mnist() {
 
    constexpr auto input_layer_size  = 28*28;
    constexpr auto output_layer_size =    10;
-   constexpr auto batch_size        =    10;
-   constexpr auto training_rounds   =    15;
+   constexpr auto batch_size        =   100;
+   constexpr auto training_rounds   =    25;
    const std::string_view filename_train_images = "../../mnist/train-images.idx3-ubyte";
    const std::string_view filename_train_labels = "../../mnist/train-labels.idx1-ubyte";
    const std::string_view filename_test_images  = "../../mnist/t10k-images.idx3-ubyte";
@@ -178,7 +178,7 @@ void run_mnist() {
                Y_training(k+1, label_buffer[j*batch_size + k]+1) = 1;
            }
 //           std::cout << "Batch X:";
-           print_number(X_training); // Looks like after a while inputs still get scrambled, very strange, will investagate further
+           //print_number(X_training); // Looks like after a while inputs still get scrambled, very strange, will investagate further
 //           std::cout << Y_training;
            std::apply([&](auto&...x) { nn::train(X_training, Y_training, x...); }, net);
        }
@@ -190,11 +190,11 @@ void run_mnist() {
    int correct = 0;
    int total   = 0;
 
-   for (int j = 0; j < label_buffer.size() / batch_size * 0 + 1; ++j) {
+   for (int j = 0; j < label_buffer.size() / batch_size ; ++j) {
        X_test *= 0; Y_test *= 0;
        for (int k = 0; k < batch_size; ++k) {
            for (int l = 0; l < input_layer_size; ++l)
-               X_test(k+1, l+1) = (double)data_buffer[j*batch_size + k*input_layer_size + l] / 255;
+               X_test(k+1, l+1) = (double)data_buffer[j*batch_size*input_layer_size + k*input_layer_size + l] / 255;
            Y_test(k+1, label_buffer[j*batch_size + k]+1) = 1;
 //           print_number(X_test);
        }
@@ -212,8 +212,9 @@ void run_mnist() {
 
 
 
-       std::cout << "A:\n" << A;
-       std::cout << "Y:\n" << Y_test;
+       //std::cout << "A:\n" << A;
+       //std::cout << "Y:\n" << Y_test;
+       std::cout << "A:\n" << (A - Y_test);
        std::cout << "MSE(all):\n" << nn::get_mse(A, Y_test) << "\n";
 
        for (uint r = 1; r <= A.nrows; ++r) {
