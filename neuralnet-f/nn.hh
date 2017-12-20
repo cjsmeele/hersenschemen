@@ -29,7 +29,8 @@ namespace nn {
     constexpr auto g  = sigma;
     constexpr auto g_ = sigma_;
 
-    constexpr auto eta = 0.0125;
+    //constexpr auto eta = 0.0125;
+    constexpr auto eta = 0.10;
 
     template<typename...>
     struct list {};

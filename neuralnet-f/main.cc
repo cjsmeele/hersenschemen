@@ -151,7 +151,7 @@ void run_mnist() {
    constexpr auto input_layer_size  = 28*28;
    constexpr auto output_layer_size =    10;
    constexpr auto batch_size        =   100;
-   constexpr auto training_rounds   =    25;
+   constexpr auto training_rounds   =    12;
    const std::string_view filename_train_images = "../../mnist/train-images.idx3-ubyte";
    const std::string_view filename_train_labels = "../../mnist/train-labels.idx1-ubyte";
    const std::string_view filename_test_images  = "../../mnist/t10k-images.idx3-ubyte";
@@ -165,7 +165,7 @@ void run_mnist() {
    auto data_buffer  = read_mnist_idx3(filename_train_images);
 
    // This does the thing.
-   auto net = nn::make_net<double,input_layer_size,output_layer_size,2,15>();
+   auto net = nn::make_net<double,input_layer_size,output_layer_size,3,40>();
    std::apply([](auto& ...x){(x.mip([](auto) {return (double)rand()/RAND_MAX*2 - 1;}), ...);}, net);
 
    for (auto i = 0; i < training_rounds; ++i) {
