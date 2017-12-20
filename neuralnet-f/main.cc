@@ -136,7 +136,7 @@ void print_number(const Matrixd<I, 784>& n) {
                 else if (p <= 0.6)
                     std::cout << "▒";
                 else if (p <= 0.8)
-                    std::cout << "▒";
+                    std::cout << "▓";
                 else
                     std::cout << "█";
             }
