@@ -136,7 +136,6 @@ print <<EOF;
 
     // Run test set.
     auto A = std::apply([&](auto&...x) { return nn::forwards(Atest, x...); }, net);
-    std::cout << A;
 
     // Assess test set results.
     int correct = 0;
