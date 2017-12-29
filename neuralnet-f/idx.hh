@@ -22,6 +22,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <string_view>
 
 namespace idx {
 
@@ -32,7 +33,8 @@ namespace idx {
         uint8_t r[sizeof(T)] alignas(T) = {};
         for (size_t i = 0; i < sizeof(T); ++i)
             r[i] = ((uint8_t*)&v)[sizeof(T)-i-1];
-        return *(T*)r;
+        T *x = (T*)r;
+        return *x;
     }
 
     template<typename T>
