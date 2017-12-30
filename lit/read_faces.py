@@ -2,6 +2,7 @@
 
 import numpy as np
 import cv2
+from PIL import Image
 
 import torch
 import torch.nn as nn
@@ -21,7 +22,8 @@ class TiDataSet(Dataset):
         data_dir = self.DATA_DIR if data_dir is None else data_dir
 
         names = glob.glob(data_dir + "*.png") # name expansion holy shit
-        # print(names)
+        
+                  
 
         #dummy image loader
         N = len(names)
@@ -30,15 +32,20 @@ class TiDataSet(Dataset):
 
         for n in range(N):
             images[n] = cv2.imread(names[n], 0).reshape((28,28,1)) #Yes we have 1 channel, better make it explicit or .ToTensor will freak the heck out
-            labels[n] = int(names[n].split('/')[-1][0:2]) # poof
-            # print(labels[n])
-
+            # images[n] = Image.open(names[n]).convert('L')
+            # images[n].reshape((28,28,1))
+            labels[n] = int(names[n].split('/')[-1][0:2])-1 # poof
+            #print(labels[n])
+        
         self.transform = transform
         self.images    = images  #torch.from_numpy(images)
         self.labels    = labels  #torch.from_numpy(labels)
+        
+        print(len(self.images), len(self.labels))
+
 
     def __getitem__(self, index):
-        print ('\tcalling Dataset:__getitem__ @ idx=%d'%index)
+        # print ('\tcalling Dataset:__getitem__ @ idx=%d'%index)
         img   = self.images[index]
         label = self.labels[index]
 
@@ -48,17 +55,16 @@ class TiDataSet(Dataset):
         return img, label
 
     def __len__(self):
-        print ('\tcalling Dataset:__len__')
+        # print ('\tcalling Dataset:__len__')
         return len(self.images)
 
 dataset = TiDataSet()
 print("Hi!")
 
-
 #######################################
 
 # Hyper Parameters
-num_epochs = 1
+num_epochs = 10
 batch_size = 1
 learning_rate = 0.100
 
@@ -68,7 +74,7 @@ test_dataset  = TiDataSet(transform=transforms.ToTensor())
 # Data Loader (Input Pipeline)
 train_loader = torch.utils.data.DataLoader(dataset    = train_dataset,
                                            batch_size = batch_size, 
-                                           shuffle    = True)
+                                           shuffle    = False)
 
 test_loader  = torch.utils.data.DataLoader(dataset    = test_dataset,
                                            batch_size = batch_size, 
