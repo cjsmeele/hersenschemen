@@ -22,44 +22,78 @@
 
 namespace nn {
 
+    // Activation functions. {{{
+
     constexpr auto sigma  = [](auto ws) { return 1 / (1 + exp(-ws)); };
     // Input for sigma' is an activation value (the sigma of the weighted sum of inputs).
     constexpr auto sigma_ = [](auto a)  { return a * (1 - a);        };
 
+    constexpr auto relu  = [](auto ws) { return ws <= 0 ? 0 : ws; };
+    constexpr auto relu_ = [](auto a)  { return a  <= 0 ? 0 : 1;  };
+
+    /// The actual activation function being used.
     constexpr auto g  = sigma;
     constexpr auto g_ = sigma_;
 
+    // }}}
+
+    /// The learn rate.
     //constexpr auto eta = 0.0125;
     constexpr auto eta = 0.10;
 
+    /// Dummy type container.
     template<typename...>
     struct list {};
 
+    // The machine spirits are willing.
+
     namespace detail {
+        // Accumulate types in `Acc`.
         template<template<typename...> typename C, typename Acc, typename X, uint I>
         struct repeat;
+
         template<template<typename...> typename C, typename... Acc, typename X>
         struct repeat<C,list<Acc...>,X,0> {
+            // Call the continuation with the pack of types.
             using type = C<Acc...>;
         };
         template<template<typename...> typename C, typename... Acc, typename X, uint I>
         struct repeat<C,list<Acc...>,X,I> {
+            // Fill `Acc` recursively.
             using type = typename repeat<C,list<X,Acc...>,X,I-1>::type;
         };
     }
 
+    /**
+     * \brief Repeat a type.
+     *
+     * \tparam C Continuation, to be called with the result
+     * \tparam X The type to be repeated
+     * \tparam C I the amount of repetitions
+     */
     template<template<typename...> typename C, typename X, uint I>
     using repeat = typename detail::repeat<C,list<>,X,I>::type;
 
-    // The machine spirits are willing.
-
+    /**
+     * \brief Forward propagate one layer.
+     *
+     * \param A Matrix of activations of the previous layer (or inputs).
+     * \param W Matrix of weights between the previous layer and the next.
+     * \param f Activation function to use.
+     *
+     * \return Matrix of activations of the next layer.
+     */
     template<typename AT, typename WT, typename F = decltype(g)>
     constexpr auto forward_one(const AT &A, const WT &W, F f = g) {
         return dot(A,W).map(f);
     }
 
-    /* Cheap forward that doesn't keep track of activations,
-     * for when you care only about the output layer.
+    /**
+     * \brief Cheap forward that doesn't keep track of activations.
+     *
+     * For when you care only about activations in the output layer.
+     *
+     * \return A matrix of activations in the output layer.
      */
     template<typename A1T, typename WT, typename... WsT>
     constexpr auto forwards(const A1T &A1, const WT &W, const WsT&... Ws) {
@@ -72,25 +106,76 @@ namespace nn {
 
     namespace detail {
 
+        // (scroll down to the `train` function in the outer namespace for interface documentation)
+
         template<typename...>
         struct train_backward;
 
+        // Here be dragons.
+
+        /**
+         * \brief Backward propagation.
+         *
+         * - The L* types are activation layer matrix types.
+         * - The W* types are weight matrix types.
+         * - The L*D types are matrices that contain the deltas (error) of
+         *   the next layer (the output of the current layer).
+         * - The Y type, used only for the first call to train_backward,
+         *   (-> the specialization below this one)
+         *   contains the *expected* activations of the output layer.
+         *
+         * For each step, we pop one layer of activations and weights,
+         * adjust the weights for the current layer and recurse with
+         * the rest of the layers and weights.
+         *
+         * The template parameter packs for lists and weights are passed
+         * wrapped in a list type in order to separate them.
+         */
         template<typename L1T, typename... LsT, typename WT, typename... WsT>
         struct train_backward<list<L1T,LsT...>,list<WT,WsT...>> {
+            /**
+             * \brief Backward propagation.
+             *
+             * Called for each layer of weights in combination with the
+             * activations of the input side of those weights.
+             *
+             * As you would expect, this recurses from the output layer towards the input layer.
+             *
+             * \param L2D The deltas of the *output* side of the weights.
+             * \param L1  The activations of the *input* side of the weights.
+             * \param W   The weights.
+             * \param Ws  The rest of the weights, closer to the input layer.
+             */
             template<typename L2DT>
             constexpr static auto f(L2DT L2D, L1T L1, LsT... Ls, WT &W, WsT&... Ws) {
+                // Calculate our own delta.
                 auto D = dot(L2D, W.T()) * L1.map(g_);
+                // Adjust our weights based on our activation and the delta of the *next* layer.
                 W += eta * dot(L1.T(), L2D);
+
+                // If this is not yet the input layer, recurse and pass along the deltas of this layer.
                 if constexpr (sizeof...(WsT) > 0)
                     train_backward<list<LsT...>,list<WsT...>>
                         ::f(D, Ls..., Ws...);
             }
         };
 
+        /**
+         * \brief Backward propagation (first step).
+         *
+         * This specialization of train_backward is called with the expected
+         * activations of the output layer.
+         * This will recursively update all weights in the network.
+         *
+         * Type names have the same meaning as the specialization above.
+         */
         template<typename LAT, typename... LsT, typename... WsT, typename YT>
         struct train_backward<list<LAT,LsT...>,list<WsT...>,YT> {
             constexpr static auto f(LAT LA, LsT... Ls, WsT&... Ws, const YT &Y) {
+                // No weights to update for this step!
+                // Just calculate our own delta and let the rest of the net figure it out.
                 auto D = (Y - LA) * LA.map(g_);
+                // This should always be true.
                 if constexpr (sizeof...(LsT) > 0)
                     train_backward<list<LsT...>,list<WsT...>>
                         ::f(D, Ls..., Ws...);
@@ -101,6 +186,18 @@ namespace nn {
         template<typename...>
         struct train_forward;
 
+        /**
+         * \brief Forward propagation.
+         *
+         * Type names are similar to backprop above, with the following differences:
+         *
+         * - Activations per layer are accumulated in LsT
+         *   this is our output, and will be input for train_backwards later on.
+         * - Weights drip from the WsT list to the WsCT list.
+         *   The WsT weights are our inputs. On each layer we pop one weight type
+         *   from WsT and push it into WsCT, to keep track of our progress.
+         *   At the end, we will pass WsCT to train_backward so they can be updated.
+         */
         template<typename... LsT,
                  typename... WsCT>
         struct train_forward<list<LsT...>,
