@@ -30,7 +30,7 @@ namespace idx {
     [[nodiscard]] constexpr T big_little_swap(T v) {
         static_assert(std::is_integral<T>::value, "T must be of integral type");
         static_assert(std::is_unsigned<T>::value, "swap is only defined for unsigned types");
-        uint8_t r[sizeof(T)] alignas(T) = {};
+        alignas(T) uint8_t r[sizeof(T)] = {};
         for (size_t i = 0; i < sizeof(T); ++i)
             r[i] = ((uint8_t*)&v)[sizeof(T)-i-1];
         T *x = (T*)r;
@@ -209,7 +209,7 @@ namespace idx {
                 for (uint l = 0; l < input_layer_size; ++l)
                     X_test(k+1, l+1) = (double)data_buffer[j*batch_size*input_layer_size + k*input_layer_size + l] / 255;
                 Y_test(k+1, label_buffer[j*batch_size + k]+1) = 1;
-                //print_images<batch_size,28,28>(X_test);
+                // print_images<batch_size,28,28>(X_test);
             }
             auto A = std::apply([&](auto&...x) { return nn::forwards(X_test, x...); }, net);
 
@@ -234,7 +234,8 @@ namespace idx {
                     ++correct;
             }
         }
-        std::cout << "Correct:  " << correct << "/" << total << "\\n";
+        std::cout << "Correct:  " << correct << "/" << total << "\n";
+        std::cout << "Percentage:  " << double(correct) / double(total) * 100.0 << "\n";
 
         return RunResult<decltype(net)> { net, total_mse/(label_buffer.size() / batch_size),
                                           correct, total };
